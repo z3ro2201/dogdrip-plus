@@ -11,6 +11,7 @@ const loadingOverlay = document.createElement("div");
 loadingOverlay.id = "ext-loading-overlay";
 loadingOverlay.innerHTML = `<div class="spinner"></div><div class="loading-text">페이지 최적화 중...</div>`;
 
+// ① 수동 차단 확인 및 사유 입력 모달
 const blockModal = document.createElement("div");
 blockModal.id = "ext-block-modal";
 blockModal.style.display = "none";
@@ -28,7 +29,7 @@ blockModal.innerHTML = `
     </div>
 `;
 
-// ② 수동 메모 작성, 수정, 삭제 및 컬러 팔레트 픽커 통합 모달창 주입
+// ② 수동 메모 작성, 수정, 삭제 및 컬러 팔레트 픽커 통합 모달창
 const memoModal = document.createElement("div");
 memoModal.id = "ext-memo-modal";
 memoModal.className = "ext-custom-modal-layout";
@@ -42,8 +43,7 @@ memoModal.innerHTML = `
         </div>
         
         <p style="margin: 0 0 8px 0; font-size: 12px; font-weight: bold; color: #64748b;">🎨 배지 색상 선택</p>
-        <div id="ext-memo-color-picker" style="display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 18px; padding: 4px 0;">
-          </div>
+        <div id="ext-memo-color-picker" style="display: flex; gap: 7px; flex-wrap: wrap; margin-bottom: 18px; padding: 4px 0;"></div>
 
         <div class="modal-btns" style="display: flex; gap: 8px; justify-content: flex-end; align-items: center;">
             <button id="memo-modal-delete-btn" style="margin-right: auto; padding: 8px 14px; font-size: 13px; font-weight: bold; background: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; border-radius: 6px; cursor: pointer; display: none;">삭제</button>
@@ -81,6 +81,7 @@ function injectInitialUI() {
         : dogconContextMenu,
     );
     bindReasonInputGuard();
+    bindBlockModalEvents(); // 💡 차단 모달 이벤트 바인딩 복구
     bindMemoModalEvents();
     return true;
   }
@@ -590,7 +591,7 @@ function executeFilterWithMinTime() {
           document.querySelectorAll("a.votebtn").forEach((btn) => {
             if (btn.dataset.extVoteProcessed) return;
             btn.dataset.extVoteProcessed = "true";
-            if (btn.getAttribute("title") === "추천") {
+            if (btn.getAttribute("title") === "추推薦") {
               const icon = btn.querySelector("i");
               if (icon) icon.className = "fas fa-baby";
               const countSpan = btn.querySelector("span.count");
@@ -734,6 +735,78 @@ function handleGroupBlockToggle() {
       window.location.reload();
     });
   });
+}
+
+// 💡 [개드립 회원 차단 모달 팝업 제어반 복구 마감]
+function openBlockModal(nickname, memberId) {
+  targetNicknameToBlock = nickname;
+  targetMemberIdToBlock = memberId;
+  const reasonInput = document.getElementById("ext-block-reason-input");
+  if (reasonInput) reasonInput.value = "";
+
+  const msgEl = document.getElementById("modal-msg");
+  const modalEl = document.getElementById("ext-block-modal");
+  if (msgEl && modalEl) {
+    msgEl.innerHTML = `<strong>${nickname}${memberId ? `(${memberId})` : ""}</strong>님을 차단하시겠습니까?<br />차단 시 대상의 글과 댓글이 보이지 않습니다.`;
+    modalEl.style.display = "flex";
+  }
+}
+
+function closeBlockModal() {
+  const modalEl = document.getElementById("ext-block-modal");
+  if (modalEl) modalEl.style.display = "none";
+  targetNicknameToBlock = "";
+  targetMemberIdToBlock = "";
+  const reasonInput = document.getElementById("ext-block-reason-input");
+  if (reasonInput) reasonInput.value = "";
+}
+
+function bindBlockModalEvents() {
+  const confirmBtn = document.getElementById("modal-confirm-btn");
+  const cancelBtn = document.getElementById("modal-cancel-btn");
+
+  if (cancelBtn) cancelBtn.addEventListener("click", closeBlockModal);
+  if (confirmBtn) {
+    confirmBtn.addEventListener("click", () => {
+      if (
+        typeof chrome === "undefined" ||
+        !chrome.runtime ||
+        !chrome.runtime.id
+      ) {
+        alert(
+          "📢 확장프로그램이 업데이트되었습니다!\n정상적인 차단 등록을 위해 페이지 새로고침(F5)을 진행합니다.",
+        );
+        window.location.reload();
+        return;
+      }
+      if (!targetNicknameToBlock || !targetMemberIdToBlock) {
+        closeBlockModal();
+        return;
+      }
+
+      const reasonInput = document.getElementById("ext-block-reason-input");
+      const blockReason = reasonInput ? reasonInput.value.trim() : "";
+      const blockStorageValue = `${targetMemberIdToBlock}:${targetNicknameToBlock}:${blockReason}`;
+
+      chrome.storage.local.get(["nicknames"], (result) => {
+        if (chrome.runtime?.lastError) return;
+        const list = result.nicknames || [];
+        const isAlreadyExist = list.some((item) =>
+          item.startsWith(`${targetMemberIdToBlock}:`),
+        );
+
+        if (!isAlreadyExist) {
+          list.push(blockStorageValue);
+          chrome.storage.local.set({ nicknames: list }, () => {
+            closeBlockModal();
+            window.location.reload();
+          });
+        } else {
+          closeBlockModal();
+        }
+      });
+    });
+  }
 }
 
 // 유저 전역 모달 팝업 제어반
