@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>개드립 플러스+ 설정</title>
+    <link rel="stylesheet" href="/css/global.css" />
+    <link rel="stylesheet" href="/css/options.css" />
+  </head>
+  <body>
+    <div class="sidebar">
+      <div class="sidebar-brand" style="display: flex">
+        <p style="margin-right: 1rem">⚙️</p>
+        <p>
+          개드립 플러스+<br />
+          상세 설정
+        </p>
+      </div>
+      <div class="nav-item active" data-target="card-keyword">
+        🚫 차단 키워드
+      </div>
+      <div class="nav-item" data-target="card-nickname">👤 차단 닉네임</div>
+      <div class="nav-item" data-target="card-dogcon">
+        🖼️ 차단 개드립콘 (단일)
+      </div>
+      <div class="nav-item" data-target="card-group">
+        📦 차단 개드립콘 (그룹)
+      </div>
+      <div class="nav-item" data-target="card-layout">
+        📐 레이아웃 및 기능 설정
+      </div>
+      <div class="nav-item" data-target="card-system">
+        💾 시스템 백업 / 로드
+      </div>
+
+      <div class="sidebar-footer">
+        <div>확장프로그램 정보</div>
+        <div>
+          버전: <span id="ext-version" class="version-tag">v 1.0.0</span>
+        </div>
+        <a
+          id="check-update-link"
+          href="https://github.com/유저명/레포지토리명"
+          target="_blank"
+          class="update-link"
+          >최신 업데이트 검사</a
+        >
+      </div>
+    </div>
+
+    <div class="main-container">
+      <div class="top-header">
+        <h1 id="main-title">차단 키워드</h1>
+      </div>
+
+      <div class="content-panel">
+        <div class="dashboard-card active" id="card-keyword">
+          <div class="card-header">
+            <h2>🚫 차단 키워드 목록 관리</h2>
+            <p>
+              이곳에 보관된 키워드가 제목에 포함되면 타겟 게시글 인스턴스가
+              목록에서 통째로 소멸 처리됩니다.
+            </p>
+          </div>
+          <div id="keyword-list" class="list-container"></div>
+        </div>
+
+        <div class="dashboard-card" id="card-nickname">
+          <div class="card-header">
+            <h2>👤 차단 닉네임 목록 관리</h2>
+            <p>
+              특정 어그로 작성자 또는 무분별한 댓글 도배 유저의 글과 코멘트를
+              감추는 전역 차단 장치입니다.
+            </p>
+          </div>
+          <div id="nickname-list" class="list-container"></div>
+        </div>
+
+        <div class="dashboard-card" id="card-dogcon">
+          <div class="card-header">
+            <h2>🖼️ 차단된 개드립콘 (단일 파일 기준)</h2>
+            <p>
+              본문이나 댓글창 서핑 중 콕 집어서 차단한 단 한 장의 이모티콘 파싱
+              정보 리스트입니다.
+            </p>
+          </div>
+          <div id="dogcon-list" class="list-container"></div>
+        </div>
+
+        <div class="dashboard-card" id="card-group">
+          <div class="card-header">
+            <h2>📦 차단된 개드립콘 (패키지 그룹 기준)</h2>
+            <p>
+              패키지 세트 전체를 통합 차단 리스트에 올려, 해당 카테고리 콘들이
+              전부 뜨지 않게 묶어둔 영역입니다.
+            </p>
+          </div>
+          <div id="dogcon-group-list" class="list-container"></div>
+        </div>
+
+        <div class="dashboard-card" id="card-layout">
+          <div class="card-header">
+            <h2>📐 레이아웃 숨김 및 특수 필터 제어</h2>
+            <p>
+              체크 활성화 시 단 1프레임의 깜빡임도 없이 개드립 문서 최상단
+              레벨에서 레이아웃 부품들을 소멸시킵니다.
+            </p>
+          </div>
+          <div class="setting-container">
+            <div class="options-checkbox-group">
+              <label class="checkbox-item">
+                <input type="checkbox" id="hide-notice-cb" />
+                <span>공지사항 목록 가리기 (.notice)</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="hide-popular-cb" />
+                <span>인기글 리스트 가리기 (.popular-item)</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="hide-sidebar-cb" />
+                <span>우측 배너 사이드바 가리기 (.clayerbox-right)</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="compact-mode-cb" />
+                <span>컴팩트 대화면 모드 연동 (.recent_wrap, .favorite)</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="disable-vote-cb" />
+                <span>추천 및 비추천 인터페이스 비활성화 (아기콘 치환)</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" id="preventYoutubeAlgorithm" />
+                <span
+                  >유튜브 플레이어 임베드 알고리즘 침투 방어 (nocookie
+                  우회)</span
+                >
+              </label>
+            </div>
+
+            <div
+              class="width-input-container"
+              style="
+                margin-top: 24px;
+                padding-top: 16px;
+                border-top: 1px dashed #cbd5e1;
+              "
+            >
+              <label
+                style="
+                  font-size: 13px;
+                  font-weight: 700;
+                  display: block;
+                  margin-bottom: 8px;
+                  color: var(--text-main);
+                "
+                >본문 렌더링 가변 넓이 설정 (기본값: 960px)</label
+              >
+              <div style="display: flex; gap: 8px; max-width: 400px">
+                <input
+                  type="text"
+                  id="content-width-input"
+                  placeholder="예: 1200px 또는 1400"
+                  style="
+                    padding: 8px 12px;
+                    border: 1px solid #cbd5e1;
+                    border-radius: var(--radius-md);
+                    font-size: 13px;
+                    flex-grow: 1;
+                    box-sizing: border-box;
+                  "
+                />
+                <button
+                  id="apply-width-btn"
+                  style="
+                    padding: 8px 16px;
+                    font-size: 13px;
+                    font-weight: 700;
+                    background-color: #0284c7;
+                    color: white;
+                    border: none;
+                    border-radius: var(--radius-md);
+                    cursor: pointer;
+                  "
+                >
+                  적용
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="dashboard-card" id="card-system">
+          <div class="card-header">
+            <h2>💾 데이터 백업하기</h2>
+            <p>
+              현재 스토리지의 모든 최적화 밸류와 레이아웃 커스텀 수치를 추출해
+              안전하게 내보냅니다. (쿠키 정보 제외)
+            </p>
+          </div>
+          <div class="backup-footer">
+            <button
+              id="backup-btn"
+              style="background-color: var(--md-primary); color: white"
+            >
+              전체 설정 내보내기 (.json)
+            </button>
+          </div>
+        </div>
+
+        <div class="dashboard-card" id="card-system" style="margin-top: 1rem">
+          <div class="card-header">
+            <h2>💾 데이터 복원하기</h2>
+            <p>
+              기존에 다운로드 받아둔 백업(.json) 파일을 불러와 시스템의 차단
+              구성과 레이아웃 비율을 원상복구합니다.
+            </p>
+          </div>
+          <div class="backup-footer">
+            <button
+              id="restore-btn"
+              style="background-color: #059669; color: white"
+            >
+              전체 설정 가져오기 (.json)
+            </button>
+          </div>
+          <input
+            type="file"
+            id="file-input"
+            accept=".json"
+            style="display: none"
+          />
+        </div>
+      </div>
+    </div>
+
+    <script src="/js/options.js"></script>
+  </body>
+</html>

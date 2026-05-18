@@ -1,0 +1,229 @@
+/* 구글 Material 3 & 삼성 One UI 6 하이브리드 통합 스타일시트 */
+:root {
+  --bg-main: #f3f4f6;
+  --bg-card: #ffffff;
+  --md-primary: #3b82f6;
+  --md-primary-hover: #2563eb;
+  --text-main: #111827;
+  --text-sub: #6b7280;
+  --border-color: #e5e7eb;
+  --radius-lg: 20px;
+  --radius-md: 12px;
+  --radius-pill: 9999px;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.ui-card {
+  background: var(--bg-card);
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.02),
+    0 1px 3px rgba(0, 0, 0, 0.01);
+  border: none;
+  box-sizing: border-box;
+}
+
+.ui-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  font-family: inherit;
+}
+.ui-button-default {
+  background-color: #e5e7eb;
+  color: #4b5563;
+}
+.ui-button-default:hover {
+  background-color: #d1d5db;
+  color: #1f2937;
+}
+.ui-button-primary {
+  background-color: var(--md-primary);
+  color: #ffffff;
+}
+.ui-button-primary:hover {
+  background-color: var(--md-primary-hover);
+}
+.ui-button-success {
+  background-color: #059669;
+  color: #ffffff;
+}
+.ui-button-success:hover {
+  background-color: #047857;
+}
+.ui-button-dark {
+  background-color: var(--text-main);
+  color: #ffffff;
+}
+.ui-button-dark:hover {
+  background-color: #1f2937;
+}
+.ui-button:active {
+  transform: scale(0.96);
+}
+
+/* 💡 [NEW] One UI 감성 체크박스 정렬 레이아웃 */
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 0;
+}
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+.checkbox-item span {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+.checkbox-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--md-primary); /* Material 3 포인트 컬러 매핑 */
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  background: #f3f4f6;
+  color: #374151;
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  margin: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid var(--border-color);
+  white-space: nowrap;
+}
+.badge button {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  margin-left: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.badge button:hover {
+  color: #dc2626;
+}
+.empty-notice {
+  color: var(--text-sub);
+  font-size: 13px;
+  padding: 12px 0;
+  font-style: italic;
+}
+
+/* ==========================================
+   🎛️ 글로벌 공통 토글 스위치 (Switch Toggle)
+   ========================================== */
+.ext-setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.ext-setting-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-color, #334155);
+}
+
+.ext-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+  flex-shrink: 0;
+}
+
+.ext-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.ext-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cbd5e1;
+  transition: 0.3s;
+}
+
+.ext-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: #ffffff;
+  transition: 0.3s;
+}
+
+/* 켜짐(Checked) 상태 */
+.ext-switch input:checked + .ext-slider {
+  background-color: #3b82f6; /* 메인 브랜드 컬러 */
+}
+
+.ext-switch input:focus + .ext-slider {
+  box-shadow: 0 0 1px #3b82f6;
+}
+
+.ext-switch input:checked + .ext-slider:before {
+  transform: translateX(20px);
+}
+
+/* 둥근 형태 마감 */
+.ext-slider.round {
+  border-radius: 24px;
+}
+.ext-slider.round:before {
+  border-radius: 50%;
+}
+
+/**/
+
+.section-group {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border-color);
+}
+
+.section-title {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-main);
+}

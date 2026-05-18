@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="stylesheet" href="/css/global.css" />
+    <link rel="stylesheet" href="/css/control_panel.css" />
+  </head>
+  <body>
+    <div class="ui-card">
+      <h1>개드립 Plus+</h1>
+      <a
+        id="open-options-link2"
+        href="#"
+        style="
+          font-size: 12.5px;
+          color: var(--md-primary);
+          text-decoration: none;
+          font-weight: 700;
+          letter-spacing: -0.3px;
+        "
+        >🛠️ 차단 내역 조회 및 전체 설정 관리</a
+      >
+    </div>
+
+    <div class="ui-card">
+      <h3>🍪 사이트 환경 설정</h3>
+
+      <div class="ext-setting-row">
+        <span class="ext-setting-label">개드립콘 절약모드</span>
+        <label class="ext-switch">
+          <input type="checkbox" id="toggle-cookie-switch" />
+          <span class="ext-slider round"></span>
+        </label>
+      </div>
+
+      <div class="ext-setting-row">
+        <span class="ext-setting-label">색상 반전</span>
+        <button id="toggle-invert-btn" class="ui-button">테마 변경</button>
+      </div>
+    </div>
+
+    <div class="ui-card">
+      <h3>👁️ 화면 레이아웃 설정</h3>
+      <div class="checkbox-group">
+        <label class="checkbox-item">
+          <span>공지글 안보기</span>
+          <input type="checkbox" id="hide-notice-cb" />
+        </label>
+        <label class="checkbox-item">
+          <span>인기글 안보기</span>
+          <input type="checkbox" id="hide-popular-cb" />
+        </label>
+        <label class="checkbox-item">
+          <span>우측 인기글 안보기</span>
+          <input type="checkbox" id="hide-sidebar-cb" />
+        </label>
+        <label class="checkbox-item">
+          <span>컴팩트 모드</span>
+          <input type="checkbox" id="compact-mode-cb" />
+        </label>
+        <label class="checkbox-item">
+          <span>추천 기능 비활성화 (추천 박스 숨김)</span>
+          <input type="checkbox" id="disable-vote-cb" />
+        </label>
+      </div>
+      <div class="section-group">
+        <p class="section-title">본문 넓이 설정 (기본: 960px)</p>
+        <div class="input-group">
+          <input
+            type="text"
+            id="content-width-input"
+            placeholder="본문 넓이 설정 (기본: 960px)"
+            style="font-size: 12.5px"
+          />
+          <button
+            id="apply-width-btn"
+            class="ui-button ui-button-primary"
+            style="
+              padding: 8px 14px;
+              border-radius: var(--radius-md);
+              font-size: 12.5px;
+            "
+          >
+            적용
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="ui-card">
+      <h3>🔒 보안 설정</h3>
+      <div class="checkbox-group">
+        <label class="checkbox-item">
+          <span>유튜브 알고리즘 방어 (시청 기록 미저장)</span>
+          <input type="checkbox" id="preventYoutubeAlgorithm" />
+        </label>
+      </div>
+    </div>
+
+    <div class="ui-card">
+      <h3>🚫 빠른 키워드 차단</h3>
+      <div class="input-group">
+        <input
+          type="text"
+          id="keyword-input"
+          placeholder="차단할 키워드 입력"
+        />
+        <button id="add-keyword-btn" class="ui-button ui-button-dark">
+          추가
+        </button>
+      </div>
+    </div>
+
+    <div class="ui-card">
+      <h3>👤 빠른 닉네임 차단</h3>
+      <div class="input-group">
+        <input
+          type="text"
+          id="nickname-input"
+          placeholder="차단할 닉네임 입력"
+        />
+        <button id="add-nickname-btn" class="ui-button ui-button-dark">
+          추가
+        </button>
+      </div>
+    </div>
+
+    <div style="margin-top: 16px; text-align: center">
+      <a
+        id="open-options-link"
+        href="#"
+        style="
+          font-size: 12.5px;
+          color: var(--md-primary);
+          text-decoration: none;
+          font-weight: 700;
+          letter-spacing: -0.3px;
+        "
+        >🛠️ 차단 내역 조회 및 전체 설정 관리</a
+      >
+    </div>
+
+    <script src="/js/popup.js"></script>
+  </body>
+</html>

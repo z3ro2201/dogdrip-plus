@@ -1,0 +1,202 @@
+#ext-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(46, 67, 97, 0.1);
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.2s ease-out;
+  color: #ffffff;
+  font-family: sans-serif;
+}
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-top: 4px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.loading-text {
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+#ext-block-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: sans-serif;
+}
+#ext-block-modal .modal-content {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 280px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  color: #333333;
+}
+#ext-block-modal p {
+  margin: 0 0 15px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+#ext-block-modal .modal-btns {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+#ext-block-modal button {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+}
+#ext-block-modal .btn-danger {
+  background-color: #f43f5e;
+  color: white;
+}
+#ext-block-modal .btn-secondary {
+  background-color: #e2e8f0;
+  color: #334155;
+}
+
+.ext-block-menu-item {
+  color: #f43f5e !important;
+  cursor: pointer;
+}
+.xe-widget-wrapper {
+  height: auto !important;
+}
+.eq.clayerbox-right-list {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+#ext-dogcon-menu {
+  position: absolute;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  z-index: 2000000;
+  font-family: sans-serif;
+  min-width: 190px;
+}
+.dogcon-menu-item {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #334155;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-decoration: none;
+}
+.dogcon-menu-item:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.dogcon-menu-item.block-action {
+  color: #ef4444;
+  font-weight: bold;
+}
+.dogcon-menu-item.unblock-action {
+  color: #10b981;
+  font-weight: bold;
+}
+
+.ext-dogcon-blocked {
+  display: inline-flex;
+  align-items: center;
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px dashed #cbd5e1;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px;
+  margin: 2px;
+  font-family: sans-serif;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+.ext-dogcon-blocked:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+/* 1. 공지글 안보기 매칭 (html에 클래스가 붙었을 때 내부 li, tr을 조준) */
+html.ext-hide-notice li.notice,
+html.ext-hide-notice tr.notice {
+  display: none !important;
+}
+
+/* 2. 인기글 안보기 매칭 */
+html.ext-hide-popular li.popular-item,
+html.ext-hide-popular tr.popular-item {
+  display: none !important;
+}
+
+/* 3. 우측 인기글 사이드바 안보기 매칭 */
+html.ext-hide-sidebar .clayerbox-right {
+  display: none !important;
+}
+
+/* 4. 컴팩트 모드 매칭 */
+html.ext-hide-compact .recent_wrap,
+html.ext-hide-compact .favorite {
+  display: none !important;
+}
+
+/* 5. 추천 기능 비활성화 (본문 하단 큰 박스 선제 숨김) */
+html.ext-hide-vote .wgtRv.ed_vote.visited {
+  display: none !important;
+}
+
+/* 본문 세부 콘텐츠 박스 및 하위 섹션 레이아웃 폭 강제 동기화 */
+html[style*="--ext-custom-width"] .container {
+  width: var(--ext-custom-width) !important;
+  max-width: var(--ext-custom-width) !important;
+  min-width: var(--ext-custom-width) !important;
+  margin: 0 auto !important; /* 가운데 정렬 마감 */
+}
+
+html.ext-hide-compact .secontent,
+html.ext-hide-compact .board-list,
+html.ext-hide-compact .ed.board.container {
+  width: 100% !important; /* 부모 컨테이너인 1200px에 맞춰 꽉 차게 확장 */
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+html.ddnad {
+  display: none;
+}
