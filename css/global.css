@@ -214,8 +214,18 @@
   border-radius: 50%;
 }
 
-/**/
+/* 💡 쿠키 스위치가 disabled 되면 마우스 오버 시 무조건 금지 포인터 렌더링 */
+#toggle-cookie-switch:disabled,
+#toggle-cookie-switch:disabled + .ext-slider {
+  cursor: not-allowed !important;
+}
 
+/* (선택사항) 만약 부모 라벨 클래스나 switch 영역이 따로 있다면 함께 지정 */
+.ext-switch input:disabled ~ .ext-slider {
+  cursor: not-allowed !important;
+}
+
+/* 섹션 그룹 및 섹션 타이틀 */
 .section-group {
   margin-top: 14px;
   padding-top: 12px;

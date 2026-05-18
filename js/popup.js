@@ -150,13 +150,52 @@ function handleCheckboxChange(key, value) {
 }
 
 /* ================= 🍪 개드립콘 절약모드 토글 스위치 로직 ================= */
+/* ================= 🍪 개드립콘 절약모드 토글 스위치 로직 ================= */
 function checkCookieStatus() {
-  chrome.cookies.get({ url: COOKIE_URL, name: TXT_COOKIE_NAME }, (cookie) => {
-    const switchEl = document.getElementById("toggle-cookie-switch");
-    if (switchEl) {
-      switchEl.checked = !!(cookie && cookie.value === "1");
-    }
-  });
+  const switchEl = document.getElementById("toggle-cookie-switch");
+  if (!switchEl) return;
+
+  chrome.cookies.get(
+    { url: COOKIE_URL, name: "rx_login_status" },
+    (loginCookie) => {
+      const isNotLoggedIn =
+        !loginCookie ||
+        loginCookie.value === "none" ||
+        loginCookie.value.trim() === "";
+
+      if (isNotLoggedIn) {
+        switchEl.checked = false;
+        switchEl.disabled = true;
+        // 💡 [추가] 스위치 본체 마우스 오버 시에도 확실하게 금지 마크 표시
+        switchEl.style.cursor = "not-allowed";
+
+        const labelEl = switchEl.closest("label") || switchEl.parentElement;
+        if (labelEl) {
+          labelEl.style.opacity = "0.5";
+          labelEl.style.cursor = "not-allowed"; // 👈 금지 아이콘 포인터
+          labelEl.title = "로그인이 필요한 기능입니다.";
+        }
+        return;
+      }
+
+      // 정상 로그인 상태일 때 스타일 원상복구
+      switchEl.disabled = false;
+      switchEl.style.cursor = "pointer"; // 💡 로그인 시에는 다시 손가락 포인터로
+      const labelEl = switchEl.closest("label") || switchEl.parentElement;
+      if (labelEl) {
+        labelEl.style.opacity = "1";
+        labelEl.style.cursor = "pointer";
+        labelEl.removeAttribute("title");
+      }
+
+      chrome.cookies.get(
+        { url: COOKIE_URL, name: TXT_COOKIE_NAME },
+        (cookie) => {
+          switchEl.checked = !!(cookie && cookie.value === "1");
+        },
+      );
+    },
+  );
 }
 
 function toggleTxtModeCookie(e) {
