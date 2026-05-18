@@ -1,7 +1,7 @@
 {
-  "manifest_version": 4,
+  "manifest_version": 3,
   "name": "개드립 Plus +",
-  "version": "1.4",
+  "version": "1.5",
   "description": "개드립(dogdrip.net) 전용 편의성 확장프로그램. 개드립콘 절약 모드, 테마 반전 토글 및 키워드/닉네임 기반 게시물·댓글 차단 기능을 제공합니다.",
   "icons": {
     "16": "img/icon-16.png",

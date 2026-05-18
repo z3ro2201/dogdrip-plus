@@ -169,8 +169,18 @@ function renderList(list, key, containerId) {
     if (key === "blockedDogcons" || key === "blockedDogconGroups") {
       badge.innerText = item.name;
       badge.title = `ID: ${item.id}`;
+    }
+    // 💡 [NEW] 대시보드 닉네임 배지 렌더링 시 "memberId:닉네임" 파싱 우회 기믹 주입
+    else if (key === "nicknames") {
+      if (item.includes(":")) {
+        const splitted = item.split(":");
+        badge.innerText = `${splitted[0]} (${splitted[1]})`; // 화면에는 한글 닉네임 노출
+        badge.title = `회원고유ID: ${splitted[0]}`; // 마우스 올리면 회원 번호 툴팁 제공
+      } else {
+        badge.innerText = item; // 구형 텍스트 데이터 예외 방어
+      }
     } else {
-      badge.innerText = item;
+      badge.innerText = item; // 키워드 등 기본 문자열
     }
 
     const delBtn = document.createElement("button");

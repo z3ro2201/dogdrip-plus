@@ -49,9 +49,6 @@ document
   .getElementById("add-keyword-btn")
   .addEventListener("click", () => addListItem("keywords", "keyword-input"));
 document
-  .getElementById("add-nickname-btn")
-  .addEventListener("click", () => addListItem("nicknames", "nickname-input"));
-document
   .getElementById("toggle-invert-btn")
   .addEventListener("click", toggleThemeCookie);
 
@@ -108,9 +105,6 @@ document.getElementById("apply-width-btn").addEventListener("click", () => {
 document.getElementById("keyword-input").addEventListener("keypress", (e) => {
   if (e.key === "Enter") document.getElementById("add-keyword-btn").click();
 });
-document.getElementById("nickname-input").addEventListener("keypress", (e) => {
-  if (e.key === "Enter") document.getElementById("add-nickname-btn").click();
-});
 document
   .getElementById("content-width-input")
   .addEventListener("keypress", (e) => {
@@ -149,7 +143,6 @@ function handleCheckboxChange(key, value) {
   });
 }
 
-/* ================= 🍪 개드립콘 절약모드 토글 스위치 로직 ================= */
 /* ================= 🍪 개드립콘 절약모드 토글 스위치 로직 ================= */
 function checkCookieStatus() {
   const switchEl = document.getElementById("toggle-cookie-switch");
@@ -229,9 +222,9 @@ function checkThemeCookieStatus() {
     const changeEl = document.getElementById("toggle-invert-btn");
     if (changeEl) {
       if (!cookie || cookie.value === "a") {
-        changeEl.innerText = "☀️ 라이트테마 (A)";
+        changeEl.innerText = "☀️ 라이트테마";
       } else if (cookie.value === "b") {
-        changeEl.innerText = "🌙 다크테마 (B)";
+        changeEl.innerText = "🌙 다크테마";
       }
     }
   });

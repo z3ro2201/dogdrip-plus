@@ -1,32 +1,31 @@
-// 확장프로그램이 처음 설치되거나 업데이트되었을 때 실행
-chrome.runtime.onInstalled.addListener(() => {
-  if (details.reason === "install") {
-    // 💡 page/welcome.html 같은 가이드용 페이지를 새 탭으로 강제 팝업
+/**
+ * 개드립 Plus + 백그라운드 마스터 스케줄러 (background.js)
+ */
+
+// 💡 괄호 안에 (details) 매개변수를 정확하게 주입하여 브라우저의 가이드 데이터를 받아옵니다.
+chrome.runtime.onInstalled.addListener((details) => {
+  if (details && details.reason === "install") {
+    // 🚀 셀프 수동 설치든, 스토어 출시 설치든 상관없이 최초 1회 가이드 팝업 실행
     chrome.tabs.create({
       url: chrome.runtime.getURL("page/welcome.html"),
     });
   }
-  console.log("개드립 Plus + 확장프로그램이 성공적으로 설치되었습니다.");
+  console.log("개드립 Plus + 확장프로그램이 성공적으로 가동되었습니다.");
 
-  // 초기 설치 시 스토리지 기본값 세팅 (선택 사항)
+  // 초기 설치 시 스토리지 기본값 세팅 (안전장치)
   chrome.storage.local.get(["keywords", "nicknames"], (result) => {
     if (!result.keywords) chrome.storage.local.set({ keywords: [] });
     if (!result.nicknames) chrome.storage.local.set({ nicknames: [] });
   });
 });
 
-// [옵션] 쿠키 상태가 백그라운드에서 실시간으로 변하는 것을 감지하고 싶을 때 사용
+// [옵션] 쿠키 상태 실시간 감지 레이더
 chrome.cookies.onChanged.addListener((changeInfo) => {
-  // 개드립 도메인의 쿠키인지 확인
   if (changeInfo.cookie.domain.includes("dogdrip.net")) {
-    // 우리가 제어하려는 txtmode 쿠키인지 확인
     if (changeInfo.cookie.name === "txtmode") {
       console.log(
         `[Background] txtmode 쿠키 변경됨! 현재 상태 -> 삭제 여부: ${changeInfo.removed}, 값: ${changeInfo.cookie.value}`,
       );
-
-      // 만약 팝업을 열지 않고도 쿠키가 강제로 조작되는 것을 방지하거나,
-      // 특정 상태를 항시 유지하고 싶다면 여기에 추가 로직을 작성할 수 있습니다.
     }
   }
 });
