@@ -4,15 +4,18 @@
 
 document.addEventListener("DOMContentLoaded", () => {
   // 1. 🚀 외부 공용 파일로 분리된 원격 버전 교차 검증 모듈 작동
-  execFilterVersionCheck();
+  if (typeof execFilterVersionCheck === "function") {
+    execFilterVersionCheck();
+  }
 
-  // 2. 크롬 스토리지에서 전체 차단 리스트 로드
+  // 2. 크롬 스토리지에서 전체 차단 리스트 및 유저 메모 로드
   loadData("keywords", "keyword-list");
   loadData("nicknames", "nickname-list");
   loadData("blockedDogcons", "dogcon-list");
   loadData("blockedDogconGroups", "dogcon-group-list");
+  loadDashboardUserMemos(); // 💡 [NEW] 기등록 유저 메모 대시보드 렌더러 가동
 
-  // 3. 📐 레이아웃 제어 체크박스 및 본문 폭 설정 상태 일괄 복원
+  // 3. 📐 레이아웃 제어 체크박스 및 차단 방식 라디오 상태 일괄 복원
   chrome.storage.local.get(
     [
       "hideNotice",
@@ -22,6 +25,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "disableVote",
       "preventYoutubeAlgorithm",
       "contentWidth",
+      "blockMethod",
     ],
     (result) => {
       const isCompact = result.compactMode || false;
@@ -42,12 +46,20 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("content-width-input").value =
         result.contentWidth || "";
 
-      // 💡 [초기 가동] 컴팩트 모드 활성화 여부에 따른 수동 폭 폼 록킹 제어
+      // 차단 방식 라디오 버튼 상태 복원
+      const method = result.blockMethod || "remove";
+      if (method === "blind") {
+        document.getElementById("block-method-blind").checked = true;
+      } else {
+        document.getElementById("block-method-remove").checked = true;
+      }
+
+      // 컴팩트 모드 활성화 여부에 따른 수동 폭 폼 록킹 제어
       toggleWidthFormState(isCompact);
     },
   );
 
-  // 4. 레이아웃 체크박스 실시간 동기화 바인딩
+  // 4. 레이아웃 체크박스 및 라디오 버튼 실시간 동기화 바인딩
   document
     .getElementById("hide-notice-cb")
     .addEventListener("change", (e) =>
@@ -64,14 +76,17 @@ document.addEventListener("DOMContentLoaded", () => {
       handleCheckboxChange("hideSidebar", e.target.checked),
     );
 
-  // 💡 컴팩트 모드 토글 스위치 핸들러 고도화
+  document
+    .getElementById("block-method-remove")
+    .addEventListener("change", handleBlockMethodRadioChange);
+  document
+    .getElementById("block-method-blind")
+    .addEventListener("change", handleBlockMethodRadioChange);
+
+  // 컴팩트 모드 토글 스위치 핸들러 고도화
   document.getElementById("compact-mode-cb").addEventListener("change", (e) => {
     const isChecked = e.target.checked;
-
-    // 폼 상태 실시간 제어 (꺼지면 960 고정 및 disabled)
     toggleWidthFormState(isChecked);
-
-    // 공통 저장 및 리로드
     handleCheckboxChange("compactMode", isChecked);
   });
 
@@ -105,7 +120,6 @@ document.addEventListener("DOMContentLoaded", () => {
       navItems.forEach((nav) => nav.classList.remove("active"));
       item.classList.add("active");
 
-      // 클릭한 왼쪽 메뉴의 텍스트를 상단 큰 제목에 실시간 바인딩 (이모지 제외 보정)
       if (mainTitleEl) {
         mainTitleEl.innerText = item.innerText
           .replace(
@@ -126,6 +140,14 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     });
   });
+
+  // 💡 미니 팝업창 닫기용 취소 리스너 브릿지 결합
+  const cancelBtn = document.getElementById("ext-dash-popup-cancel-btn");
+  if (cancelBtn)
+    cancelBtn.addEventListener("click", () => {
+      document.getElementById("ext-dashboard-memo-edit-popup").style.display =
+        "none";
+    });
 });
 
 // 백업 및 복구 엔진 핵심 이벤트 리스너 바인딩
@@ -139,6 +161,17 @@ document
   .getElementById("file-input")
   .addEventListener("change", restoreSettings);
 
+/* ================= 🍪 차단 방식 라디오 상태 전용 싱크 핸들러 ================= */
+if (typeof handleBlockMethodRadioChange !== "function") {
+  function handleBlockMethodRadioChange(e) {
+    if (e.target.checked) {
+      chrome.storage.local.set({ blockMethod: e.target.value }, () => {
+        refreshActiveTabs();
+      });
+    }
+  }
+}
+
 /* ================= 🚫 차단 데이터 동기화 렌더러 ================= */
 function loadData(key, containerId) {
   chrome.storage.local.get([key], (result) => {
@@ -150,13 +183,11 @@ function loadData(key, containerId) {
 function removeListItem(key, value, containerId) {
   chrome.storage.local.get([key], (result) => {
     let list = result[key] || [];
-
     if (key === "blockedDogcons" || key === "blockedDogconGroups") {
       list = list.filter((item) => item.id !== value.id);
     } else {
       list = list.filter((item) => item !== value);
     }
-
     chrome.storage.local.set({ [key]: list }, () => {
       renderList(list, key, containerId);
       refreshActiveTabs();
@@ -182,18 +213,20 @@ function renderList(list, key, containerId) {
     if (key === "blockedDogcons" || key === "blockedDogconGroups") {
       badge.innerText = item.name;
       badge.title = `ID: ${item.id}`;
-    }
-    // 💡 [NEW] 대시보드 닉네임 배지 렌더링 시 "memberId:닉네임" 파싱 우회 기믹 주입
-    else if (key === "nicknames") {
+    } else if (key === "nicknames") {
       if (item.includes(":")) {
         const splitted = item.split(":");
-        badge.innerText = `${splitted[1]} (${splitted[0]})`; // 화면에는 한글 닉네임 노출
-        badge.title = `회원고유ID: ${splitted[0]}`; // 마우스 올리면 회원 번호 툴팁 제공
+        badge.innerHTML = `
+          <div>
+            <p style="margin:0; font-weight:bold;">${splitted[1]} (${splitted[0]})</p>
+            ${splitted[2] ? `<p style="margin:0;margin-top:2px;font-size:0.8rem;color:#ef4444;">차단사유: ${splitted[2]}</p>` : ""}
+          </div>`;
+        badge.title = `회원고유ID: ${splitted[0]}`;
       } else {
-        badge.innerText = item; // 구형 텍스트 데이터 예외 방어
+        badge.innerText = item;
       }
     } else {
-      badge.innerText = item; // 키워드 등 기본 문자열
+      badge.innerText = item;
     }
 
     const delBtn = document.createElement("button");
@@ -207,6 +240,110 @@ function renderList(list, key, containerId) {
   });
 }
 
+/* =========================================================================
+   📝 [NEW] 유저 메모 대시보드 실시간 조회 및 인라인 제어반 컴포넌트 구역
+   ========================================================================= */
+function loadDashboardUserMemos() {
+  const container = document.getElementById("user-memo-dashboard-list");
+  if (!container) return;
+  container.innerHTML = "";
+
+  chrome.storage.local.get(["userMemos"], (result) => {
+    const memos = result.userMemos || {};
+    const memberIds = Object.keys(memos);
+
+    if (memberIds.length === 0) {
+      container.innerHTML =
+        '<span style="color: #94a3b8; font-size: 13px;">등록된 유저 메모 내역이 현재 비어있습니다.</span>';
+      return;
+    }
+
+    memberIds.forEach((mid) => {
+      const rawData = memos[mid];
+      let memoText = rawData;
+      let colorStyle = "blue";
+
+      if (rawData.includes(":")) {
+        const parts = rawData.split(":");
+        memoText = parts[0];
+        colorStyle = parts[1] || "blue";
+      }
+
+      // 💡 global.css에 코딩해둔 원순정 M3 배지 스킨을 빌드하여 렌더링에 이식
+      const memoBadge = document.createElement("span");
+      memoBadge.className = `ext-user-memo-badge ext-memo-${colorStyle}`;
+      memoBadge.style.cssText =
+        "padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; margin: 4px;";
+      memoBadge.innerText = `${memoText} (ID: ${mid})`;
+      memoBadge.title = "클릭하여 메모 내용 수정 및 삭제";
+
+      // 💡 [원클릭 팝업 편집 리스너 브릿지 트리거]
+      memoBadge.addEventListener("click", () => {
+        openDashboardMemoPopup(mid, memoText);
+      });
+
+      container.appendChild(memoBadge);
+    });
+  });
+}
+
+// 대시보드 직속 메모 팝업 편집 다이얼로그 호출기
+function openDashboardMemoPopup(memberId, currentText) {
+  const popup = document.getElementById("ext-dashboard-memo-edit-popup");
+  const input = document.getElementById("ext-dash-popup-input");
+  const saveBtn = document.getElementById("ext-dash-popup-save-btn");
+  const deleteBtn = document
+    .getElementById("ext-dashboard-memo-edit-popup")
+    .querySelector("#ext-dash-popup-delete-btn");
+
+  input.value = currentText;
+  popup.style.display = "flex";
+  setTimeout(() => input.focus(), 50);
+
+  // 리스너 중복 바인딩 누수를 완전히 복구하기 위해 복제 노드 치환 청소 루틴 작동
+  const newSaveBtn = saveBtn.cloneNode(true);
+  const newDeleteBtn = deleteBtn.cloneNode(true);
+  saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
+  deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+
+  // [수정 완료 저장 연산]
+  newSaveBtn.addEventListener("click", () => {
+    const updatedText = input.value.trim();
+    if (!updatedText) {
+      newDeleteBtn.click();
+      return;
+    }
+
+    chrome.storage.local.get(["userMemos"], (res) => {
+      const currentMemos = res.userMemos || {};
+      const rawData = currentMemos[memberId] || "";
+      const colorStyle = rawData.includes(":") ? rawData.split(":")[1] : "blue";
+
+      currentMemos[memberId] = `${updatedText}:${colorStyle}`; // 사유는 냅두고 글자만 정밀 변경
+
+      chrome.storage.local.set({ userMemos: currentMemos }, () => {
+        popup.style.display = "none";
+        loadDashboardUserMemos(); // 새로고침 없이 대시보드판 실시간 재렌더링
+        refreshActiveTabs();
+      });
+    });
+  });
+
+  // [즉시 파괴 삭제 연산]
+  newDeleteBtn.addEventListener("click", () => {
+    chrome.storage.local.get(["userMemos"], (res) => {
+      const currentMemos = res.userMemos || {};
+      delete currentMemos[memberId];
+
+      chrome.storage.local.set({ userMemos: currentMemos }, () => {
+        popup.style.display = "none";
+        loadDashboardUserMemos();
+        refreshActiveTabs();
+      });
+    });
+  });
+}
+
 /* ================= ⚙️ 공통 기능 실행 및 수동 폭 제어부 ================= */
 function handleCheckboxChange(key, value) {
   chrome.storage.local.set({ [key]: value }, () => {
@@ -216,7 +353,7 @@ function handleCheckboxChange(key, value) {
 
 function applyCustomWidth() {
   const inputEl = document.getElementById("content-width-input");
-  if (inputEl.disabled) return; // 🔒 잠금 상태 시 처리 차단
+  if (inputEl.disabled) return;
 
   let widthVal = inputEl.value.trim();
   if (widthVal && !isNaN(widthVal)) {
@@ -228,47 +365,33 @@ function applyCustomWidth() {
   });
 }
 
-/**
- * 💡 [NEW] 컴팩트 모드 스위칭 연동 수동 폭 입력 폼 활성/비활성화 가드 엔진
- */
 function toggleWidthFormState(isCompactActive) {
   const inputEl = document.getElementById("content-width-input");
   const btnEl = document.getElementById("apply-width-btn");
   if (!inputEl || !btnEl) return;
 
-  // 1. 컴팩트 모드가 비활성화(False) 상태인 경우 ➡️ 960 강제 셋 및 UI 잠금
   if (!isCompactActive) {
     inputEl.value = "960";
     inputEl.disabled = true;
     btnEl.disabled = true;
-
-    // 시각적 피드백 매핑 (비활성화 스타일 및 금지 마우스 포인터)
     inputEl.style.opacity = "0.5";
     inputEl.style.cursor = "not-allowed";
     btnEl.style.opacity = "0.5";
     btnEl.style.cursor = "not-allowed";
-
-    // 컴팩트 모드가 꺼지면 본섭 app.js의 Fallback(960px) 기믹 연동을 위해 빈값 세이브
     chrome.storage.local.set({ contentWidth: "" });
-  }
-  // 2. 컴팩트 모드가 활성화(True) 상태인 경우 ➡️ 폼 제한 전면 해제
-  else {
+  } else {
     inputEl.disabled = false;
     btnEl.disabled = false;
-
     inputEl.style.opacity = "1";
     inputEl.style.cursor = "text";
     btnEl.style.opacity = "1";
     btnEl.style.cursor = "pointer";
-
-    // 기존 세이브해둔 커스텀 폭 값이 있다면 복구
     chrome.storage.local.get(["contentWidth"], (res) => {
       inputEl.value = res.contentWidth || "";
     });
   }
 }
 
-/* ================= 🔄 마스터 멀티 탭 동기화 리로더 ================= */
 function refreshActiveTabs() {
   chrome.tabs.query({ url: "*://*.dogdrip.net/*" }, (tabs) => {
     tabs.forEach((tab) => chrome.tabs.reload(tab.id));
@@ -290,12 +413,13 @@ function backupSettings() {
       "disableVote",
       "preventYoutubeAlgorithm",
       "contentWidth",
+      "blockMethod",
+      "userMemos", // 💡 백업 다운로드 파일 포맷에 명세서 완전 통합 완료
     ],
     (result) => {
       const dataStr = JSON.stringify(result, null, 2);
       const blob = new Blob([dataStr], { type: "application/json" });
       const url = URL.createObjectURL(blob);
-
       const a = document.createElement("a");
       a.href = url;
       a.download = `dogdrip_clean_filter_backup_${new Date().toISOString().slice(0, 10)}.json`;
@@ -311,12 +435,10 @@ document.keep_restore_reader = restoreSettings;
 function restoreSettings(event) {
   const file = event.target.files[0];
   if (!file) return;
-
   const reader = new FileReader();
   reader.onload = function (e) {
     try {
       const importedData = JSON.parse(e.target.result);
-
       const keywords = Array.isArray(importedData.keywords)
         ? importedData.keywords
         : [];
@@ -360,6 +482,16 @@ function restoreSettings(event) {
         typeof importedData.contentWidth === "string"
           ? importedData.contentWidth
           : "";
+      const blockMethod =
+        typeof importedData.blockMethod === "string"
+          ? importedData.blockMethod
+          : "remove";
+
+      // 💡 [NEW] 복원 시 불러올 파일에 백업된 메모장이 있다면 파싱 디코딩, 없으면 무공해 빈 구조체 연동
+      const userMemos =
+        importedData.userMemos && typeof importedData.userMemos === "object"
+          ? importedData.userMemos
+          : {};
 
       chrome.storage.local.set(
         {
@@ -374,38 +506,41 @@ function restoreSettings(event) {
           disableVote,
           preventYoutubeAlgorithm,
           contentWidth,
+          blockMethod,
+          userMemos, // 스토리지에 메모 저장 마감
         },
         () => {
           alert(
-            "🎉 차단 데이터와 레이아웃 환경 설정을 성공적으로 모두 복원했습니다!",
+            "🎉 차단 데이터와 사용자 메모 내역을 성공적으로 모두 복원했습니다!",
           );
-
           loadData("keywords", "keyword-list");
           loadData("nicknames", "nickname-list");
           loadData("blockedDogcons", "dogcon-list");
           loadData("blockedDogconGroups", "dogcon-group-list");
+          loadDashboardUserMemos(); // 복원 성공 즉시 대시보드 메모판 최신화 리프레시
 
           document.getElementById("hide-notice-cb").checked = hideNotice;
           document.getElementById("hide-popular-cb").checked = hidePopular;
           document.getElementById("hide-sidebar-cb").checked = hideSidebar;
-
-          // 백업 복구 시 동적 UI 상태 재매핑
           document.getElementById("compact-mode-cb").checked = compactMode;
           toggleWidthFormState(compactMode);
-
           document.getElementById("disable-vote-cb").checked = disableVote;
           document.getElementById("preventYoutubeAlgorithm").checked =
             preventYoutubeAlgorithm;
           document.getElementById("content-width-input").value = contentWidth;
+
+          if (blockMethod === "blind") {
+            document.getElementById("block-method-blind").checked = true;
+          } else {
+            document.getElementById("block-method-remove").checked = true;
+          }
 
           event.target.value = "";
           refreshActiveTabs();
         },
       );
     } catch (err) {
-      alert(
-        "❌ 파일 분석 중 치명적 파싱 규격 오류를 감지했습니다. 올바른 백업 파일인지 확인해주세요.",
-      );
+      alert("❌ 파일 분석 중 치명적 파싱 규격 오류를 감지했습니다.");
       event.target.value = "";
     }
   };

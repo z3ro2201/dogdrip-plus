@@ -135,6 +135,36 @@
       </div>
     </div>
 
+    <div class="ui-card">
+      <h3>🚫 차단 사용자 처리 방식</h3>
+      <div class="block-method-container">
+        <label class="radio-item">
+          <input
+            type="radio"
+            name="ext-block-method"
+            id="block-method-remove"
+            value="remove"
+            checked
+          />
+          <span class="radio-mark"></span>
+          <span>흔적 없이 목록과 화면에서 아예 삭제</span>
+        </label>
+        <label class="radio-item">
+          <input
+            type="radio"
+            name="ext-block-method"
+            id="block-method-blind"
+            value="blind"
+          />
+          <span class="radio-mark"></span>
+          <span
+            >내용을 숨기고 "차단된 사용자의 글/댓글입니다" 가림막 노출 (클릭 시
+            토글 열람)</span
+          >
+        </label>
+      </div>
+    </div>
+
     <div style="margin-top: 16px; text-align: center">
       <a
         id="open-options-link"

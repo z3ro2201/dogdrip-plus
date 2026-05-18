@@ -19,6 +19,7 @@
         🚫 차단 키워드
       </div>
       <div class="nav-item" data-target="card-nickname">👤 차단 닉네임</div>
+      <div class="nav-item" data-target="card-memo">📝 유저 메모 관리</div>
       <div class="nav-item" data-target="card-dogcon">
         🖼️ 차단 개드립콘 (단일)
       </div>
@@ -107,6 +108,22 @@
           <div id="nickname-list" class="list-container"></div>
         </div>
 
+        <div class="dashboard-card" id="card-memo">
+          <div class="card-header">
+            <h2>📝 유저 메모 목록 관리</h2>
+            <p>
+              개드립 본섭에서 등록했던 사용자들의 고유 메모 리스트입니다.<br />
+              등록된 메모 배지를 누르면 내용을 간편하게 즉시 수정하거나 삭제할
+              수 있습니다.
+            </p>
+          </div>
+          <div
+            id="user-memo-dashboard-list"
+            class="list-container"
+            style="display: flex; flex-wrap: wrap; gap: 8px"
+          ></div>
+        </div>
+
         <div class="dashboard-card" id="card-dogcon">
           <div class="card-header">
             <h2>🖼️ 차단된 개드립콘 (단일 파일 기준)</h2>
@@ -159,6 +176,42 @@
                 <input type="checkbox" id="preventYoutubeAlgorithm" />
                 <span>유튜브 플레이어 임베드 알고리즘 방어</span>
               </label>
+            </div>
+
+            <div
+              style="
+                margin-top: 24px;
+                padding-top: 16px;
+                border-top: 1px dashed #cbd5e1;
+              "
+            >
+              <h2>🚫 차단 사용자 처리 방식</h2>
+              <div class="block-method-container">
+                <label class="radio-item">
+                  <input
+                    type="radio"
+                    name="ext-block-method"
+                    id="block-method-remove"
+                    value="remove"
+                    checked
+                  />
+                  <span class="radio-mark"></span>
+                  <span>흔적 없이 목록과 화면에서 아예 삭제</span>
+                </label>
+                <label class="radio-item">
+                  <input
+                    type="radio"
+                    name="ext-block-method"
+                    id="block-method-blind"
+                    value="blind"
+                  />
+                  <span class="radio-mark"></span>
+                  <span
+                    >내용을 숨기고 "차단된 사용자의 글/댓글입니다" 가림막 노출
+                    (클릭 시 토글 열람)</span
+                  >
+                </label>
+              </div>
             </div>
 
             <div
@@ -253,6 +306,104 @@
             accept=".json"
             style="display: none"
           />
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="ext-dashboard-memo-edit-popup"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      "
+    >
+      <div
+        style="
+          background: #fff;
+          padding: 20px;
+          border-radius: var(--radius-md);
+          width: 320px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        "
+      >
+        <p
+          style="
+            margin-top: 0;
+            font-weight: bold;
+            font-size: 13px;
+            color: var(--text-main);
+          "
+          id="ext-dash-popup-title"
+        >
+          📝 메모 수정
+        </p>
+        <input
+          type="text"
+          id="ext-dash-popup-input"
+          style="
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 13px;
+            box-sizing: border-box;
+            margin-bottom: 12px;
+          "
+        />
+        <div style="display: flex; gap: 6px; justify-content: flex-end">
+          <button
+            id="ext-dash-popup-save-btn"
+            style="
+              padding: 6px 12px;
+              background: #3b82f6;
+              color: #fff;
+              border: none;
+              border-radius: 4px;
+              font-size: 12px;
+              font-weight: bold;
+              cursor: pointer;
+            "
+          >
+            저장
+          </button>
+          <button
+            id="ext-dash-popup-delete-btn"
+            style="
+              padding: 6px 12px;
+              background: #fee2e2;
+              color: #b91c1c;
+              border: 1px solid #fca5a5;
+              border-radius: 4px;
+              font-size: 12px;
+              font-weight: bold;
+              cursor: pointer;
+            "
+          >
+            삭제
+          </button>
+          <button
+            id="ext-dash-popup-cancel-btn"
+            style="
+              padding: 6px 12px;
+              background: #e5e7eb;
+              color: #4b5563;
+              border: none;
+              border-radius: 4px;
+              font-size: 12px;
+              font-weight: bold;
+              cursor: pointer;
+            "
+          >
+            취소
+          </button>
         </div>
       </div>
     </div>

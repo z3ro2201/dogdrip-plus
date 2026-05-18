@@ -1,17 +1,21 @@
-/* 구글 Material 3 & 삼성 One UI 6 하이브리드 통합 스타일시트 */
+/* =========================================================================
+   🎨 구글 Material 3 & 삼성 One UI 6 하이브리드 통합 디자인 시스템 스타일시트
+   ========================================================================= */
+
 :root {
   --bg-main: #f3f4f6;
   --bg-card: #ffffff;
-  --md-primary: #3b82f6;
-  --md-primary-hover: #2563eb;
-  --text-main: #111827;
-  --text-sub: #6b7280;
-  --border-color: #e5e7eb;
-  --radius-lg: 20px;
-  --radius-md: 12px;
-  --radius-pill: 9999px;
+  --md-primary: #3b82f6; /* 메인 브랜드 원포인트 컬러 */
+  --md-primary-hover: #2563eb; /* 버튼/스위치 호버 컬러 */
+  --text-main: #111827; /* 주 텍스트 컬러 (One UI 차콜 그레이) */
+  --text-sub: #6b7280; /* 부 텍스트 컬러 */
+  --border-color: #e5e7eb; /* 연한 구분선 및 테두리 */
+  --radius-lg: 20px; /* 대형 UI 카드용 원각 둥글기 */
+  --radius-md: 12px; /* 인풋창 / 배지용 중형 원각 */
+  --radius-pill: 9999px; /* 타원형 버튼 / 토글용 완전 원각 */
 }
 
+/* 🎛️ 부드러운 스크롤바 디자인 보정 */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -26,6 +30,10 @@
 ::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
 }
+
+/* ==========================================
+   🧱 공통 컴포넌트 뼈대 구조 디자인 (Card, Button, Badge)
+   ========================================== */
 
 .ui-card {
   background: var(--bg-card);
@@ -81,33 +89,7 @@
   background-color: #1f2937;
 }
 .ui-button:active {
-  transform: scale(0.96);
-}
-
-/* 💡 [NEW] One UI 감성 체크박스 정렬 레이아웃 */
-.checkbox-group {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 4px 0;
-}
-.checkbox-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  user-select: none;
-}
-.checkbox-item span {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--text-main);
-}
-.checkbox-item input[type="checkbox"] {
-  width: 18px;
-  height: 18px;
-  cursor: pointer;
-  accent-color: var(--md-primary); /* Material 3 포인트 컬러 매핑 */
+  transform: scale(0.96); /* 터치다운 모션 효과 */
 }
 
 .badge {
@@ -134,6 +116,7 @@
 .badge button:hover {
   color: #dc2626;
 }
+
 .empty-notice {
   color: var(--text-sub);
   font-size: 13px;
@@ -142,8 +125,138 @@
 }
 
 /* ==========================================
-   🎛️ 글로벌 공통 토글 스위치 (Switch Toggle)
+   ☑️ One UI 6 감성 체크박스 정렬 레이아웃 (Checkbox)
    ========================================== */
+
+.checkbox-group {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 4px 0;
+}
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+}
+.checkbox-item span {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+.checkbox-item input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--md-primary); /* Material 3 포인트 스킨 컬러 연동 */
+}
+
+/* ==========================================
+   🎛️ 하이브리드 커스텀 라디오 버튼 (Radio Button)
+   ========================================== */
+
+.block-method-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* 라디오 항목 래퍼 디자인 */
+.radio-item {
+  display: flex;
+  align-items: center;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  padding: 2px 0;
+  transition: opacity 0.2s ease;
+}
+
+/* 브라우저 순정 라디오 인터페이스 숨기기 */
+.radio-item input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+/* 🔘 원형 라디오 외곽선 커스텀 (One UI 플랫 스타일) */
+.radio-mark {
+  position: relative;
+  display: inline-block;
+  height: 18px;
+  width: 18px;
+  background-color: transparent;
+  border: 2px solid #cbd5e1; /* 비활성화 상태 그레이 라인 테두리 */
+  border-radius: 50%;
+  margin-right: 10px;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 라디오 내부 텍스트 라인 세팅 */
+.radio-item span {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-main);
+  line-height: 18px;
+}
+
+/* 마우스 오버 시 연동 피드백 */
+.radio-item:hover .radio-mark {
+  border-color: #94a3b8;
+}
+
+/* 켜짐(Checked) 상태 - 테두리를 브랜드 컬러로 부드럽게 전환 */
+.radio-item input[type="radio"]:checked ~ .radio-mark {
+  border-color: var(--md-primary);
+  background-color: transparent; /* 원 안쪽은 깔끔하게 공백 대비감 유지 */
+}
+
+/* 켜짐(Checked) 상태 - 중심 내부 원(Dot) 다이내믹 팝업 애니메이션 (Material 3 스케일 트랜지션 기믹) */
+.radio-mark:after {
+  content: "";
+  position: absolute;
+  display: block;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--md-primary);
+  transform: translate(-50%, -50%) scale(0); /* 기본 크기는 0 상태로 숨김 */
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); /* 탄성 바운스 모션 효과 */
+}
+
+/* 라디오 체크 활성화 시 중심 Dot이 팅~ 하고 부드럽게 확대되며 튀어나옴 */
+.radio-item input[type="radio"]:checked ~ .radio-mark:after {
+  transform: translate(-50%, -50%) scale(1);
+}
+
+/* 클릭 타격 시 물리적인 수축 스케일 효과 부여 */
+.radio-item:active .radio-mark {
+  transform: scale(0.92);
+}
+
+/* 예외 조건: 라디오 비활성화(Disabled) 상태 방어선 스타일 마감 */
+.radio-item input[type="radio"]:disabled ~ .radio-mark {
+  background-color: #f1f5f9;
+  border-color: #e2e8f0;
+  cursor: not-allowed !important;
+}
+.radio-item input[type="radio"]:disabled ~ span {
+  color: var(--text-sub);
+  cursor: not-allowed !important;
+}
+
+/* ==========================================
+   🔌 글로벌 공통 퀵 패널 토글 스위치 (Switch Toggle)
+   ========================================== */
+
 .ext-setting-row {
   display: flex;
   justify-content: space-between;
@@ -193,20 +306,21 @@
   transition: 0.3s;
 }
 
-/* 켜짐(Checked) 상태 */
+/* 켜짐(Checked) 스위치 가동 상태 회로 연결 */
 .ext-switch input:checked + .ext-slider {
-  background-color: #3b82f6; /* 메인 브랜드 컬러 */
+  background-color: var(--md-primary); /* 브랜드 아이덴티티 매핑 블루 */
 }
 
 .ext-switch input:focus + .ext-slider {
-  box-shadow: 0 0 1px #3b82f6;
+  box-shadow: 0 0 1px var(--md-primary);
 }
 
+/* 스위치 온 클릭 토글 핀 핀포인트 이동 기믹 */
 .ext-switch input:checked + .ext-slider:before {
   transform: translateX(20px);
 }
 
-/* 둥근 형태 마감 */
+/* 토글 캡슐 및 단추 둥근 형태 스킨 마감 */
 .ext-slider.round {
   border-radius: 24px;
 }
@@ -214,18 +328,20 @@
   border-radius: 50%;
 }
 
-/* 💡 쿠키 스위치가 disabled 되면 마우스 오버 시 무조건 금지 포인터 렌더링 */
+/* 🔒 [방어막] 쿠키 제어 스위치가 비활성화(disabled) 상태가 되면 칼마우스 오버 금지 포인터 렌더링 */
 #toggle-cookie-switch:disabled,
 #toggle-cookie-switch:disabled + .ext-slider {
   cursor: not-allowed !important;
 }
 
-/* (선택사항) 만약 부모 라벨 클래스나 switch 영역이 따로 있다면 함께 지정 */
 .ext-switch input:disabled ~ .ext-slider {
   cursor: not-allowed !important;
 }
 
-/* 섹션 그룹 및 섹션 타이틀 */
+/* ==========================================
+   📂 섹션 디렉토리 그룹 및 점선 파티션 마감 구역
+   ========================================== */
+
 .section-group {
   margin-top: 14px;
   padding-top: 12px;
@@ -236,4 +352,108 @@
   font-size: 13.5px;
   font-weight: 600;
   color: var(--text-main);
+}
+
+/* =========================================================================
+   🏷️ Material 3 / One UI 6 프리미엄 유저 메모 배지 시스템 (User Memo Badges)
+   ========================================================================= */
+
+/* 💡 메모 배지 공통 코어 아키텍처 */
+.ext-user-memo-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  margin-left: 5px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 14px;
+  border-radius: 6px; /* One UI 감성의 자연스러운 둥글기 리프레시 */
+  border: 1px solid transparent;
+  vertical-align: middle;
+  white-space: nowrap;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis; /* 메모가 너무 길면 이쁘게 말줄임표 처리 */
+  box-sizing: border-box;
+  user-select: none;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.ext-user-memo-badge:hover {
+  transform: scale(1.05); /* 마우스 호버 시 부드러운 스케일 피드백 */
+}
+
+/* ==========================================
+   🎨 M3 톤다운 파스텔 디지털 팔레트 10종 트랙
+   ========================================== */
+
+/* 1. 토널 블루 (기본/일반 메모) */
+.ext-memo-blue {
+  background-color: #e0effe;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+
+/* 2. 에메랄드 그린 (친근함/안전 유저) */
+.ext-memo-green {
+  background-color: #dcfce7;
+  color: #15803d;
+  border-color: #bbf7d0;
+}
+
+/* 3. 코랄 레드 (강력한 주의/어그로 방어) */
+.ext-memo-red {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+/* 4. 앰버 옐로우 (경고/요주의 인물) */
+.ext-memo-yellow {
+  background-color: #fef9c3;
+  color: #a16207;
+  border-color: #fef08a;
+}
+
+/* 5. 퍼플 라벤더 (네임드/독특한 유저) */
+.ext-memo-purple {
+  background-color: #f3e8ff;
+  color: #6b21a8;
+  border-color: #e9d5ff;
+}
+
+/* 6. 마젠타 핑크 (관심 유저/기타 1) */
+.ext-memo-pink {
+  background-color: #fce7f3;
+  color: #be185d;
+  border-color: #fbcfe8;
+}
+
+/* 7. 시안 터코이즈 (정보/꿀팁 유저) */
+.ext-memo-cyan {
+  background-color: #ecfeff;
+  color: #0e7490;
+  border-color: #cffafe;
+}
+
+/* 8. 만다린 오렌지 (재미있는/유머 유저) */
+.ext-memo-orange {
+  background-color: #ffedd5;
+  color: #c2410c;
+  border-color: #fed7aa;
+}
+
+/* 9. 세이지 티일 (조용한/참고 유저) */
+.ext-memo-teal {
+  background-color: #ccfbf1;
+  color: #0f766e;
+  border-color: #99f6e4;
+}
+
+/* 10. 슬레이트 그레이 (무색/단순 메모) */
+.ext-memo-gray {
+  background-color: #f1f5f9;
+  color: #475569;
+  border-color: #e2e8f0;
 }

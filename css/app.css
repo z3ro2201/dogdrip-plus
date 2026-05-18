@@ -98,6 +98,26 @@
   background: transparent !important;
 }
 
+.input-group {
+  display: flex;
+  gap: 8px;
+}
+.input-group > input[type="text"] {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  background-color: #f9fafb;
+  color: var(--text-main);
+  transition: all 0.2s ease;
+}
+.input-group > input[type="text"]:focus {
+  outline: none;
+  border-color: var(--md-primary);
+  background-color: #ffffff;
+}
+
 #ext-dogcon-menu {
   position: absolute;
   background: #ffffff;

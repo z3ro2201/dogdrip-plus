@@ -1,5 +1,5 @@
 /**
- * 확장프로그램 팝업창(page/dogdrip.html) 전용 마스터 스크립트 (js/popup.js)
+ * 확장프로그램 팝업창(page/dogdrip.html) 전용 마스터 스크립트 (라디오 차단 스킨 인터랙션 동기화 완료판)
  */
 
 var COOKIE_URL = "https://www.dogdrip.net";
@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", () => {
   checkCookieStatus();
   checkThemeCookieStatus();
 
-  // 스토리지에 저장된 모든 체크박스 상태 일괄 복원
+  // 스토리지에 저장된 모든 체크박스 및 라디오 상태 일괄 복원
   chrome.storage.local.get(
     [
       "hideNotice",
@@ -24,6 +24,7 @@ document.addEventListener("DOMContentLoaded", () => {
       "disableVote",
       "preventYoutubeAlgorithm",
       "contentWidth",
+      "blockMethod", // 💡 차단 방식 데이터 로드 대상 통합
     ],
     (result) => {
       const isCompact = result.compactMode || false;
@@ -44,7 +45,15 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById("content-width-input").value =
         result.contentWidth || "";
 
-      // 💡 [초기 가동] 컴팩트 모드 활성화 여부에 따른 수동 폭 폼 록킹 제어
+      // 💡 [차단 방식 라디오 버튼 초기 동기화 복원 마감]
+      const method = result.blockMethod || "remove";
+      if (method === "blind") {
+        document.getElementById("block-method-blind").checked = true;
+      } else {
+        document.getElementById("block-method-remove").checked = true;
+      }
+
+      // 💡 컴팩트 모드 활성화 여부에 따른 수동 폭 폼 록킹 제어
       toggleWidthFormState(isCompact);
     },
   );
@@ -99,6 +108,14 @@ document
   .addEventListener("change", (e) =>
     handleCheckboxChange("preventYoutubeAlgorithm", e.target.checked),
   );
+
+// 💡 [차단 방식 라디오 스위치 그룹 실시간 체인지 인터랙션 바인딩]
+document
+  .getElementById("block-method-remove")
+  .addEventListener("change", handleBlockMethodRadioChange);
+document
+  .getElementById("block-method-blind")
+  .addEventListener("change", handleBlockMethodRadioChange);
 
 // [수동 폭 설정 버튼] 숫자만 쳤을 때 px 단위 자동 보정 및 세이브
 document.getElementById("apply-width-btn").addEventListener("click", () => {
@@ -155,6 +172,15 @@ function handleCheckboxChange(key, value) {
   chrome.storage.local.set({ [key]: value }, () => {
     refreshActiveTab();
   });
+}
+
+// 💡 [차단 방식 라디오 전용 스토리지 변동 제어선 수립]
+function handleBlockMethodRadioChange(e) {
+  if (e.target.checked) {
+    chrome.storage.local.set({ blockMethod: e.target.value }, () => {
+      refreshActiveTab();
+    });
+  }
 }
 
 /**
