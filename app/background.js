@@ -1,9 +1,15 @@
 // 확장프로그램이 처음 설치되거나 업데이트되었을 때 실행
 chrome.runtime.onInstalled.addListener(() => {
-  console.log("개드립 커스텀 확장프로그램이 성공적으로 설치되었습니다.");
-  
+  if (details.reason === "install") {
+    // 💡 page/welcome.html 같은 가이드용 페이지를 새 탭으로 강제 팝업
+    chrome.tabs.create({
+      url: chrome.runtime.getURL("page/welcome.html"),
+    });
+  }
+  console.log("개드립 Plus + 확장프로그램이 성공적으로 설치되었습니다.");
+
   // 초기 설치 시 스토리지 기본값 세팅 (선택 사항)
-  chrome.storage.local.get(['keywords', 'nicknames'], (result) => {
+  chrome.storage.local.get(["keywords", "nicknames"], (result) => {
     if (!result.keywords) chrome.storage.local.set({ keywords: [] });
     if (!result.nicknames) chrome.storage.local.set({ nicknames: [] });
   });
@@ -15,9 +21,11 @@ chrome.cookies.onChanged.addListener((changeInfo) => {
   if (changeInfo.cookie.domain.includes("dogdrip.net")) {
     // 우리가 제어하려는 txtmode 쿠키인지 확인
     if (changeInfo.cookie.name === "txtmode") {
-      console.log(`[Background] txtmode 쿠키 변경됨! 현재 상태 -> 삭제 여부: ${changeInfo.removed}, 값: ${changeInfo.cookie.value}`);
-      
-      // 만약 팝업을 열지 않고도 쿠키가 강제로 조작되는 것을 방지하거나, 
+      console.log(
+        `[Background] txtmode 쿠키 변경됨! 현재 상태 -> 삭제 여부: ${changeInfo.removed}, 값: ${changeInfo.cookie.value}`,
+      );
+
+      // 만약 팝업을 열지 않고도 쿠키가 강제로 조작되는 것을 방지하거나,
       // 특정 상태를 항시 유지하고 싶다면 여기에 추가 로직을 작성할 수 있습니다.
     }
   }
