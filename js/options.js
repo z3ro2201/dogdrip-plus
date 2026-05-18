@@ -3,13 +3,16 @@
  */
 
 document.addEventListener("DOMContentLoaded", () => {
-  // 1. 크롬 스토리지에서 전체 차단 리스트 로드
+  // 1. 🚀 [NEW] 외부 공용 파일로 분리된 원격 버전 교차 검증 모듈 작동
+  execFilterVersionCheck();
+
+  // 2. 크롬 스토리지에서 전체 차단 리스트 로드
   loadData("keywords", "keyword-list");
   loadData("nicknames", "nickname-list");
   loadData("blockedDogcons", "dogcon-list");
   loadData("blockedDogconGroups", "dogcon-group-list");
 
-  // 2. 📐 레이아웃 제어 체크박스 및 본문 폭 설정 상태 일괄 복원
+  // 3. 📐 레이아웃 제어 체크박스 및 본문 폭 설정 상태 일괄 복원
   chrome.storage.local.get(
     [
       "hideNotice",
@@ -38,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
     },
   );
 
-  // 3. 레이아웃 체크박스 실시간 동기화 바인딩
+  // 4. 레이아웃 체크박스 실시간 동기화 바인딩
   document
     .getElementById("hide-notice-cb")
     .addEventListener("change", (e) =>
@@ -80,7 +83,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (e.key === "Enter") applyCustomWidth();
     });
 
-  // 4. ⚡ 좌측 사이드바 탭 메뉴 클릭 시 우측 카드 연동 스위칭 인터랙션 바인딩
+  // 5. ⚡ 좌측 사이드바 탭 메뉴 클릭 시 우측 카드 연동 스위칭 인터랙션 바인딩
   const navItems = document.querySelectorAll(".nav-item");
   const mainTitleEl = document.getElementById("main-title");
 

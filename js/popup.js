@@ -8,10 +8,13 @@ const THEME_COOKIE_NAME = "theme";
 
 // 1. 팝업창 오픈 시 설정 데이터 로드 및 UI 복원
 document.addEventListener("DOMContentLoaded", () => {
+  // 공용 버전 체크 모듈 엔진 기동
+  execFilterVersionCheck();
+
   checkCookieStatus();
   checkThemeCookieStatus();
 
-  // 스토리지에 저장된 모든 체크박스 및 폭 설정 상태 일괄 복원
+  // 스토리지에 저장된 모든 체크박스 상태 일괄 복원
   chrome.storage.local.get(
     [
       "hideNotice",
@@ -41,7 +44,7 @@ document.addEventListener("DOMContentLoaded", () => {
   );
 });
 
-// 2. 퀵 패널 폼 및 버튼 이벤트 리스너 등록
+// 2. 퀵 패널 폼 이벤트 리스너 등록 (HTML에 존재하는 ID와 완벽 매칭)
 document
   .getElementById("add-keyword-btn")
   .addEventListener("click", () => addListItem("keywords", "keyword-input"));
@@ -87,7 +90,7 @@ document
     handleCheckboxChange("preventYoutubeAlgorithm", e.target.checked),
   );
 
-// [수동 폭 설정 버튼] 숫자만 입력했을 때 px 단위 자동 보정 및 세이브
+// [수동 폭 설정 버튼] 숫자만 쳤을 때 px 단위 자동 보정 및 세이브
 document.getElementById("apply-width-btn").addEventListener("click", () => {
   let widthVal = document.getElementById("content-width-input").value.trim();
 
@@ -126,6 +129,7 @@ document.getElementById("open-options-link").addEventListener("click", (e) => {
     }
   });
 });
+
 document.getElementById("open-options-link2").addEventListener("click", (e) => {
   e.preventDefault();
   const optionsUrl = chrome.runtime.getURL("page/options.html");
@@ -150,7 +154,6 @@ function checkCookieStatus() {
   chrome.cookies.get({ url: COOKIE_URL, name: TXT_COOKIE_NAME }, (cookie) => {
     const switchEl = document.getElementById("toggle-cookie-switch");
     if (switchEl) {
-      // 쿠키 값이 "1"이면 절약모드가 켜진 것이므로 스위치를 활성화(checked) 합니다.
       switchEl.checked = !!(cookie && cookie.value === "1");
     }
   });
@@ -169,13 +172,12 @@ function toggleTxtModeCookie(e) {
       sameSite: "no_restriction",
       expirationDate: Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60,
     },
-    (cookie) => {
+    () => {
       if (chrome.runtime.lastError) {
         console.error("쿠키 생성 실패:", chrome.runtime.lastError.message);
         e.target.checked = !e.target.checked;
         return;
       }
-
       checkCookieStatus();
       refreshActiveTab();
     },
@@ -188,9 +190,9 @@ function checkThemeCookieStatus() {
     const changeEl = document.getElementById("toggle-invert-btn");
     if (changeEl) {
       if (!cookie || cookie.value === "a") {
-        changeEl.innerText = "☀️ 밝은화면";
+        changeEl.innerText = "☀️ 라이트테마 (A)";
       } else if (cookie.value === "b") {
-        changeEl.innerText = "🌙 어두운화면";
+        changeEl.innerText = "🌙 다크테마 (B)";
       }
     }
   });
@@ -204,13 +206,12 @@ function toggleThemeCookie() {
     }
     chrome.cookies.set(
       {
-        url: COOKIE_URL,
+        url: "https://www.dogdrip.net",
         name: THEME_COOKIE_NAME,
         value: newValue,
-        domain: ".dogdrip.net",
         path: "/",
         secure: true,
-        sameSite: "lax",
+        sameSite: "no_restriction",
         expirationDate: Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60,
       },
       () => {
@@ -230,18 +231,21 @@ function refreshActiveTab() {
   });
 }
 
-/* ================= 🚫 퀵 차단 데이터 스토리지 적재기 ================= */
+/* ================= 🚫 퀵 차단 데이터 스토리지 적재기 (팝업 핀포인트 보정) ================= */
 function addListItem(key, inputId) {
   const inputEl = document.getElementById(inputId);
+  if (!inputEl) return; // 💡 방어코드 추가
+
   const value = inputEl.value.trim();
   if (!value) return;
+
   chrome.storage.local.get([key], (result) => {
     const list = result[key] || [];
     if (!list.includes(value)) {
       list.push(value);
       chrome.storage.local.set({ [key]: list }, () => {
         inputEl.value = "";
-        refreshActiveTab();
+        refreshActiveTab(); // 💡 options.js와 다르게 단일 탭 리로드만 호출하여 싱크 매칭
       });
     }
   });
