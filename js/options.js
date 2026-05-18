@@ -3,7 +3,7 @@
  */
 
 document.addEventListener("DOMContentLoaded", () => {
-  // 1. 🚀 [NEW] 외부 공용 파일로 분리된 원격 버전 교차 검증 모듈 작동
+  // 1. 🚀 외부 공용 파일로 분리된 원격 버전 교차 검증 모듈 작동
   execFilterVersionCheck();
 
   // 2. 크롬 스토리지에서 전체 차단 리스트 로드
@@ -24,20 +24,26 @@ document.addEventListener("DOMContentLoaded", () => {
       "contentWidth",
     ],
     (result) => {
+      const isCompact = result.compactMode || false;
+
       document.getElementById("hide-notice-cb").checked =
         result.hideNotice || false;
       document.getElementById("hide-popular-cb").checked =
         result.hidePopular || false;
       document.getElementById("hide-sidebar-cb").checked =
         result.hideSidebar || false;
-      document.getElementById("compact-mode-cb").checked =
-        result.compactMode || false;
+      document.getElementById("compact-mode-cb").checked = isCompact;
       document.getElementById("disable-vote-cb").checked =
         result.disableVote || false;
       document.getElementById("preventYoutubeAlgorithm").checked =
         result.preventYoutubeAlgorithm || false;
+
+      // 가변 폭 초기 값 매핑
       document.getElementById("content-width-input").value =
         result.contentWidth || "";
+
+      // 💡 [초기 가동] 컴팩트 모드 활성화 여부에 따른 수동 폭 폼 록킹 제어
+      toggleWidthFormState(isCompact);
     },
   );
 
@@ -57,11 +63,18 @@ document.addEventListener("DOMContentLoaded", () => {
     .addEventListener("change", (e) =>
       handleCheckboxChange("hideSidebar", e.target.checked),
     );
-  document
-    .getElementById("compact-mode-cb")
-    .addEventListener("change", (e) =>
-      handleCheckboxChange("compactMode", e.target.checked),
-    );
+
+  // 💡 컴팩트 모드 토글 스위치 핸들러 고도화
+  document.getElementById("compact-mode-cb").addEventListener("change", (e) => {
+    const isChecked = e.target.checked;
+
+    // 폼 상태 실시간 제어 (꺼지면 960 고정 및 disabled)
+    toggleWidthFormState(isChecked);
+
+    // 공통 저장 및 리로드
+    handleCheckboxChange("compactMode", isChecked);
+  });
+
   document
     .getElementById("disable-vote-cb")
     .addEventListener("change", (e) =>
@@ -174,7 +187,7 @@ function renderList(list, key, containerId) {
     else if (key === "nicknames") {
       if (item.includes(":")) {
         const splitted = item.split(":");
-        badge.innerText = `${splitted[0]} (${splitted[1]})`; // 화면에는 한글 닉네임 노출
+        badge.innerText = `${splitted[1]} (${splitted[0]})`; // 화면에는 한글 닉네임 노출
         badge.title = `회원고유ID: ${splitted[0]}`; // 마우스 올리면 회원 번호 툴팁 제공
       } else {
         badge.innerText = item; // 구형 텍스트 데이터 예외 방어
@@ -202,14 +215,57 @@ function handleCheckboxChange(key, value) {
 }
 
 function applyCustomWidth() {
-  let widthVal = document.getElementById("content-width-input").value.trim();
+  const inputEl = document.getElementById("content-width-input");
+  if (inputEl.disabled) return; // 🔒 잠금 상태 시 처리 차단
+
+  let widthVal = inputEl.value.trim();
   if (widthVal && !isNaN(widthVal)) {
     widthVal += "px";
-    document.getElementById("content-width-input").value = widthVal;
+    inputEl.value = widthVal;
   }
   chrome.storage.local.set({ contentWidth: widthVal }, () => {
     refreshActiveTabs();
   });
+}
+
+/**
+ * 💡 [NEW] 컴팩트 모드 스위칭 연동 수동 폭 입력 폼 활성/비활성화 가드 엔진
+ */
+function toggleWidthFormState(isCompactActive) {
+  const inputEl = document.getElementById("content-width-input");
+  const btnEl = document.getElementById("apply-width-btn");
+  if (!inputEl || !btnEl) return;
+
+  // 1. 컴팩트 모드가 비활성화(False) 상태인 경우 ➡️ 960 강제 셋 및 UI 잠금
+  if (!isCompactActive) {
+    inputEl.value = "960";
+    inputEl.disabled = true;
+    btnEl.disabled = true;
+
+    // 시각적 피드백 매핑 (비활성화 스타일 및 금지 마우스 포인터)
+    inputEl.style.opacity = "0.5";
+    inputEl.style.cursor = "not-allowed";
+    btnEl.style.opacity = "0.5";
+    btnEl.style.cursor = "not-allowed";
+
+    // 컴팩트 모드가 꺼지면 본섭 app.js의 Fallback(960px) 기믹 연동을 위해 빈값 세이브
+    chrome.storage.local.set({ contentWidth: "" });
+  }
+  // 2. 컴팩트 모드가 활성화(True) 상태인 경우 ➡️ 폼 제한 전면 해제
+  else {
+    inputEl.disabled = false;
+    btnEl.disabled = false;
+
+    inputEl.style.opacity = "1";
+    inputEl.style.cursor = "text";
+    btnEl.style.opacity = "1";
+    btnEl.style.cursor = "pointer";
+
+    // 기존 세이브해둔 커스텀 폭 값이 있다면 복구
+    chrome.storage.local.get(["contentWidth"], (res) => {
+      inputEl.value = res.contentWidth || "";
+    });
+  }
 }
 
 /* ================= 🔄 마스터 멀티 탭 동기화 리로더 ================= */
@@ -332,7 +388,11 @@ function restoreSettings(event) {
           document.getElementById("hide-notice-cb").checked = hideNotice;
           document.getElementById("hide-popular-cb").checked = hidePopular;
           document.getElementById("hide-sidebar-cb").checked = hideSidebar;
+
+          // 백업 복구 시 동적 UI 상태 재매핑
           document.getElementById("compact-mode-cb").checked = compactMode;
+          toggleWidthFormState(compactMode);
+
           document.getElementById("disable-vote-cb").checked = disableVote;
           document.getElementById("preventYoutubeAlgorithm").checked =
             preventYoutubeAlgorithm;
