@@ -116,6 +116,9 @@ document
 document
   .getElementById("block-method-blind")
   .addEventListener("change", handleBlockMethodRadioChange);
+document
+  .getElementById("block-method-badge")
+  .addEventListener("change", handleBlockMethodRadioChange);
 
 // [수동 폭 설정 버튼] 숫자만 쳤을 때 px 단위 자동 보정 및 세이브
 document.getElementById("apply-width-btn").addEventListener("click", () => {

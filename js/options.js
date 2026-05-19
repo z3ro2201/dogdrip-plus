@@ -53,10 +53,13 @@ document.addEventListener("DOMContentLoaded", () => {
       const method = result.blockMethod || "remove";
       const methodBlind = document.getElementById("block-method-blind");
       const methodRemove = document.getElementById("block-method-remove");
+      const methodBadge = document.getElementById("block-method-badge");
 
       if (method === "blind" && methodBlind) {
         methodBlind.checked = true;
       } else if (methodRemove) {
+        methodRemove.checked = true;
+      } else if (memoBadge) {
         methodRemove.checked = true;
       }
 

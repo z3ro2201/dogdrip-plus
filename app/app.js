@@ -98,6 +98,7 @@ let targetMemberIdToBlock = "";
 let targetMemoMemberId = "";
 let selectedMemoColorStyle = "blue";
 let lastClickedUserData = { memberId: "", nickname: "" };
+let currentActiveDogconData = null;
 
 function bindReasonInputGuard() {
   const reasonInput = document.getElementById("ext-block-reason-input");
@@ -116,51 +117,66 @@ function bindReasonInputGuard() {
 
 function buildBlindWrapperHTML(typeLabel, originalHTML) {
   return `
-    <div class="ext-blind-container" style="border: 1px dashed #cbd5e1; background: #f8fafc; border-radius: 6px; padding: 8px 12px; margin: 4px 0; font-size: 13px;">
-      <div class="ext-blind-header" style="color: #64748b; font-weight: 500; display: flex; justify-content: space-between; align-items: center; user-select: none;">
+    <div class="ext-blind-container">
+      <div class="ext-blind-header">
         <span>🛡️ 차단된 사용자의 ${typeLabel}입니다.</span>
-        <a href="#" class="ext-blind-toggle-btn" onclick="return false;" style="color: #0284c7; text-decoration: underline; font-weight: bold; font-size: 12px;">📄 내용 보기</a>
+        <a href="#" class="ext-blind-toggle-btn" onclick="return false;">📄 내용 보기</a>
       </div>
-      <div class="ext-blind-body" style="display: none; margin-top: 10px; border-top: 1px dashed #e2e8f0; padding-top: 10px;">${originalHTML}</div>
+      <div class="ext-blind-body">${originalHTML}</div>
     </div>
   `;
 }
 
 function attachBlindToggleEvents(container) {
-  container.querySelectorAll(".ext-blind-toggle-btn").forEach((btn) => {
-    if (btn.dataset.bound) return;
-    btn.dataset.bound = "true";
+  container.querySelectorAll(".ext-blind-container").forEach((wrapper) => {
+    if (wrapper.dataset.bound) return;
+    wrapper.dataset.bound = "true";
+
+    const btn = wrapper.querySelector(".ext-blind-toggle-btn");
+    const body = wrapper.querySelector(".ext-blind-body");
+    if (!body || !btn) return;
+
     btn.addEventListener("click", (e) => {
       e.preventDefault();
       e.stopPropagation();
-      const body = btn
-        .closest(".ext-blind-container")
-        .querySelector(".ext-blind-body");
-      if (body.style.display === "none") {
-        body.style.display = "block";
+
+      const isFixed = wrapper.classList.toggle("ext-blind-fixed");
+
+      if (isFixed) {
+        body.style.display = "flex";
         btn.innerText = "❌ 내용 숨기기";
       } else {
         body.style.display = "none";
         btn.innerText = "📄 내용 보기";
       }
     });
+
+    wrapper.addEventListener("mouseenter", () => {
+      if (wrapper.classList.contains("ext-blind-fixed")) return;
+      body.style.display = "flex";
+      btn.innerText = "👀 슬쩍 보기 중...";
+    });
+
+    wrapper.addEventListener("mouseleave", () => {
+      if (wrapper.classList.contains("ext-blind-fixed")) return;
+      body.style.display = "none";
+      btn.innerText = "📄 내용 보기";
+    });
   });
 }
 
+// 💡 [원천 설계 보정] 타 배지를 뺏어오던 전역 ID 기반 파괴 로직을 영구 폐기합니다.
 function createMemoBadgeElement(memberId, memoText, colorStyle) {
   if (!memoText) return null;
-  const existingBadge = document.getElementById(`ext-memo-badge-${memberId}`);
-  if (existingBadge) existingBadge.remove();
   const badge = document.createElement("span");
-  badge.id = `ext-memo-badge-${memberId}`;
-  const finalColor = colorStyle || "blue";
-  badge.className = `ext-user-memo-badge ext-memo-${finalColor}`;
+  // 전역 고유 간섭 방지를 위해 고유 멤버 식별 값을 클래스 클래스터에 주입합니다.
+  badge.className = `ext-user-memo-badge ext-memo-${colorStyle || "blue"} ext-badge-id-${memberId}`;
   badge.innerText = memoText;
   badge.title = `메모: ${memoText}\n(회원번호: ${memberId})`;
   return badge;
 }
 
-// 조건형 키워드 대조 매칭 엔진 (💡 시작단어/포함단어 엄격 격리 정상화 버전)
+// 조건형 키워드 대조 매칭 엔진
 function checkKeywordMatchCondition(titleText, keywordObj, targetArea) {
   if (!titleText || !keywordObj) return false;
 
@@ -171,31 +187,23 @@ function checkKeywordMatchCondition(titleText, keywordObj, targetArea) {
   const method = keywordObj.method || "includes";
   const target = keywordObj.target || "all";
 
-  // 1. 타겟 영역(posts / comments) 매칭 검사
   const normalizedTarget =
     target === "post" ? "posts" : target === "comment" ? "comments" : target;
   if (normalizedTarget !== "all" && normalizedTarget !== targetArea)
     return false;
 
-  // 2. 🛡️ 본문 문자열 정밀 청소 및 양끝 공백 제거 (유령 문자 및 제어 기호 완전 분쇄)
   let cleanText = titleText.replace(/[\s\n\r\t]+/g, " ");
   cleanText = cleanText
     .replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E]/g, "")
     .trim();
   const cleanWord = word.trim();
 
-  // 3. 🚫 [조건 정밀 분기] 각 모드별 독립 연산 집행
-
-  // ① [포함단어] 설정 시 ➡️ 문장 내부 어디든 들어가기만 하면 차단 (true)
   if (method === "includes") {
     return cleanText.includes(cleanWord);
   }
-
-  // ② [시작단어] 설정 시 ➡️ ★ 오직 문장의 '맨 첫머리'로 시작할 때만 차단 (true)
   if (method === "starts") {
     return cleanText.startsWith(cleanWord);
   }
-
   return false;
 }
 
@@ -227,6 +235,7 @@ function executeFilterWithMinTime() {
         const blockedDogcons = result.blockedDogcons || [];
         const blockedDogconGroups = result.blockedDogconGroups || [];
         const isBlindMode = result.blockMethod === "blind";
+        const isBadgeMode = result.blockMethod === "badge";
         const memos = result.userMemos || {};
 
         const blockedMemberIds = blockedUsers
@@ -268,7 +277,7 @@ function executeFilterWithMinTime() {
           return { text: rawData, style: "blue" };
         }
 
-        // ① 웹진형 레이아웃 필터 (타겟: posts)
+        // ① 웹진형 레이아웃 필터 (타겟: posts) 💡 [다중 글 독립 배지 마감 완료]
         document.querySelectorAll("li.webzine").forEach((article) => {
           const titleElement = article.querySelector(".title-link");
           const nicknameElement = article.querySelector('a[class*="member_"]');
@@ -298,9 +307,37 @@ function executeFilterWithMinTime() {
 
           if (shouldRemove) {
             article.remove();
-          } else if (shouldBlind) {
+            return;
+          }
+
+          if (shouldBlind) {
+            if (
+              currentMemberId &&
+              nicknameElement &&
+              !article.querySelector(`.ext-badge-id-${currentMemberId}`)
+            ) {
+              const userObj = blockedUsers.find(
+                (u) => String(u.member_num) === String(currentMemberId),
+              );
+              if (userObj && userObj.memo && userObj.memo.trim() !== "") {
+                const blockBadge = createMemoBadgeElement(
+                  currentMemberId,
+                  userObj.memo.trim(),
+                  "red-solid",
+                );
+                if (blockBadge) nicknameElement.after(blockBadge);
+              }
+            }
+
+            if (isBadgeMode) {
+              article.style.backgroundColor = "#fff1f2";
+              article.classList.add("ext-blocked-user-layout");
+              return; // 가드를 패스하므로 다중 노출 카드 전부 동시 바인딩 성공
+            }
+
             if (article.dataset.extFiltered) return;
             article.dataset.extFiltered = "true";
+
             if (isBlindMode) {
               const cacheHTML = article.innerHTML;
               article.innerHTML = buildBlindWrapperHTML("게시글", cacheHTML);
@@ -310,54 +347,99 @@ function executeFilterWithMinTime() {
             }
           } else if (currentMemberId && memos[currentMemberId]) {
             if (
-              nicknameElement.nextElementSibling?.classList.contains(
-                "ext-user-memo-badge",
-              )
-            )
-              return;
-            const memoData = getMemoData(currentMemberId);
-            const badge = createMemoBadgeElement(
-              currentMemberId,
-              memoData.text,
-              memoData.style,
-            );
-            if (badge) nicknameElement.after(badge);
+              nicknameElement &&
+              !article.querySelector(`.ext-badge-id-${currentMemberId}`)
+            ) {
+              const memoData = getMemoData(currentMemberId);
+              const badge = createMemoBadgeElement(
+                currentMemberId,
+                memoData.text,
+                memoData.style,
+              );
+              if (badge) nicknameElement.after(badge);
+            }
           }
         });
 
-        // ② 최근 게시물 목록 필터링 (타겟: posts)
-        if (filterKeywords.length > 0) {
-          document
-            .querySelectorAll("li div.eq span.text-link")
-            .forEach((span) => {
-              const titleText = span.textContent.trim();
+        // ② 최근 게시물 목록 및 ③ 페이지별 인기글 목록 필터링 + 차단 유저 배지 연동 구역
+        document
+          .querySelectorAll("li span.title a, li div.eq span.text-link")
+          .forEach((titleEl) => {
+            const parentLi = titleEl.closest("li");
+            if (!parentLi) return;
+
+            const nicknameElement = parentLi.querySelector(
+              'a[class*="member_"]',
+            );
+            let currentMemberId = "";
+            if (nicknameElement) {
+              const match = nicknameElement.className.match(/member_(\d+)/);
+              if (match) currentMemberId = match[1];
+            }
+
+            if (filterKeywords.length > 0) {
+              const titleText = titleEl.textContent.trim();
               if (
                 filterKeywords.some((kw) =>
                   checkKeywordMatchCondition(titleText, kw, "posts"),
                 )
               ) {
-                const parentLi = span.closest("li");
-                if (parentLi) parentLi.remove();
+                parentLi.remove();
+                return;
               }
-            });
-        }
+            }
 
-        // ③ 페이지별 인기글 목록 필터링 (타겟: posts)
-        if (filterKeywords.length > 0) {
-          document.querySelectorAll("li span.title a").forEach((link) => {
-            const titleText = link.textContent.trim();
-            if (
-              filterKeywords.some((kw) =>
-                checkKeywordMatchCondition(titleText, kw, "posts"),
-              )
-            ) {
-              const parentLi = link.closest("li");
-              if (parentLi) parentLi.remove();
+            if (currentMemberId && blockedMemberIds.includes(currentMemberId)) {
+              if (
+                nicknameElement &&
+                !parentLi.querySelector(`.ext-badge-id-${currentMemberId}`)
+              ) {
+                const userObj = blockedUsers.find(
+                  (u) => String(u.member_num) === String(currentMemberId),
+                );
+                if (userObj && userObj.memo && userObj.memo.trim() !== "") {
+                  const blockBadge = createMemoBadgeElement(
+                    currentMemberId,
+                    userObj.memo.trim(),
+                    "red-solid",
+                  );
+                  if (blockBadge) nicknameElement.after(blockBadge);
+                }
+              }
+
+              if (isBadgeMode) {
+                parentLi.style.backgroundColor = "#fff1f2";
+                parentLi.classList.add("ext-blocked-user-layout");
+                return;
+              }
+
+              if (parentLi.dataset.extFiltered) return;
+              parentLi.dataset.extFiltered = "true";
+
+              if (isBlindMode) {
+                const cacheHTML = parentLi.innerHTML;
+                parentLi.innerHTML = buildBlindWrapperHTML("게시글", cacheHTML);
+                attachBlindToggleEvents(parentLi);
+              } else {
+                parentLi.remove();
+              }
+            } else if (currentMemberId && memos[currentMemberId]) {
+              if (
+                nicknameElement &&
+                !parentLi.querySelector(`.ext-badge-id-${currentMemberId}`)
+              ) {
+                const memoData = getMemoData(currentMemberId);
+                const badge = createMemoBadgeElement(
+                  currentMemberId,
+                  memoData.text,
+                  memoData.style,
+                );
+                if (badge) nicknameElement.after(badge);
+              }
             }
           });
-        }
 
-        // ④ 테이블형 레이아웃 필터 (tr.ed) (타겟: posts) 💡 [카테고리 및 댓글수 오염 완치 버전]
+        // ④ 테이블형 레이아웃 필터 (tr.ed) (타겟: posts) 💡 [동일 유저 무한 배지 복제 완전 마감]
         document.querySelectorAll("tr.ed").forEach((row) => {
           const titleElement = row.querySelector(".title");
           const authorElement = row.querySelector(
@@ -367,32 +449,27 @@ function executeFilterWithMinTime() {
           let shouldBlind = false;
 
           if (titleElement && filterKeywords.length > 0) {
-            // 💡 [초정밀 제목 추출] 카테고리([잡담])와 댓글 수(23)를 제외한 진짜 제목 링크(.title-link) 구역만 조준합니다.
-            // 만약 디폴트 스킨에 .title-link 클래스가 없으면 차선책으로 전체 textContent에서 댓글수 배지를 깎아냅니다.
             const realTitleLink = titleElement.querySelector(".title-link");
             let titleText = "";
 
             if (realTitleLink) {
               titleText = realTitleLink.textContent.trim();
             } else {
-              // 🛡️ Fallback 가드: 링크 내부를 뒤져서 댓글수와 카테고리를 제외한 순수 텍스트만 병합
               const mainLink = titleElement.querySelector(
                 'a[href*="dogdrip.net/"], a[href^="/"]',
               );
               if (mainLink) {
-                // 댓글 수 배지(.text-primary)를 제외한 텍스트만 스캔
                 let cloneLink = mainLink.cloneNode(true);
                 const replyBadge = cloneLink.querySelector(".text-primary");
                 if (replyBadge) replyBadge.remove();
                 titleText = cloneLink.textContent
                   .replace(/\[.*?\]/g, "")
-                  .trim(); // 카테고리 괄호 문자열까지 삭제
+                  .trim();
               } else {
                 titleText = titleElement.textContent.trim();
               }
             }
 
-            // 앞뒤 보이지 않는 유령 문자 및 특수 공백 세척 마감
             const cleanTitleText = titleText
               .replace(/[\s\n\r\t]+/g, " ")
               .trim();
@@ -418,52 +495,76 @@ function executeFilterWithMinTime() {
 
           if (shouldRemove) {
             row.remove();
-          } else if (shouldBlind) {
+            return;
+          }
+
+          if (shouldBlind) {
+            if (
+              currentMemberId &&
+              authorElement &&
+              !row.querySelector(`.ext-badge-id-${currentMemberId}`)
+            ) {
+              const userObj = blockedUsers.find(
+                (u) => String(u.member_num) === String(currentMemberId),
+              );
+              if (userObj && userObj.memo && userObj.memo.trim() !== "") {
+                const blockBadge = createMemoBadgeElement(
+                  currentMemberId,
+                  userObj.memo.trim(),
+                  "red-solid",
+                );
+                if (blockBadge) authorElement.after(blockBadge);
+              }
+            }
+
+            if (isBadgeMode) {
+              row.style.backgroundColor = "#fff1f2";
+              row.classList.add("ext-blocked-user-layout");
+              return; // 🎯 가드 전 즉시 리턴하므로 동일 유저의 모든 tr 행 염색 대성공
+            }
+
             if (row.dataset.extFiltered) return;
             row.dataset.extFiltered = "true";
+
             if (isBlindMode) {
               const cacheHTML = row.innerHTML;
-              row.innerHTML = `<td colspan="6" style="padding: 0;">${buildBlindWrapperHTML("게시글", `<table style="width:100%; table-layout:fixed;"><tr>${cacheHTML}</tr></table>`)}</td>`;
+              row.innerHTML = `<td colspan="6" style="padding: 0;">${buildBlindWrapperHTML("게시글", `<table><tr>${cacheHTML}</tr></table>`)}</td>`;
               attachBlindToggleEvents(row);
             } else {
               row.remove();
             }
           } else if (currentMemberId && memos[currentMemberId]) {
             if (
-              authorElement.nextElementSibling?.classList.contains(
-                "ext-user-memo-badge",
-              )
-            )
-              return;
-            const memoData = getMemoData(currentMemberId);
-            const badge = createMemoBadgeElement(
-              currentMemberId,
-              memoData.text,
-              memoData.style,
-            );
-            if (badge) authorElement.after(badge);
+              authorElement &&
+              !row.querySelector(`.ext-badge-id-${currentMemberId}`)
+            ) {
+              const memoData = getMemoData(currentMemberId);
+              const badge = createMemoBadgeElement(
+                currentMemberId,
+                memoData.text,
+                memoData.style,
+              );
+              if (badge) authorElement.after(badge);
+            }
           }
         });
 
-        // ⑤ 댓글 영역 필터 (타겟: comments) 💡 [개드립 xe_content 마크업 공백 노이즈 완전 파괴판]
+        // ⑤ 댓글 영역 필터 (타겟: comments)
         document.querySelectorAll(".ed.comment-content").forEach((comment) => {
           const nicknameElement = comment.querySelector('a[class*="member_"]');
           let shouldKeywordRemove = false;
 
-          // 🛡️ [과녁 정밀 보정] 개드립 특유의 댓글 본문 클래스인 .xe_content를 1순위로 다이렉트 타겟팅합니다.
           const commentBodyTextEl = comment.querySelector(
             ".xe_content, .comment-text",
           );
 
           if (commentBodyTextEl && filterKeywords.length > 0) {
-            // 💡 [초정밀 스크럽] innerText 내부의 가짜 줄바꿈 노이즈(\n, \r)를 즉시 순수 빈칸으로 압축 분쇄합니다.
             const rawContent = (
               commentBodyTextEl.innerText ||
               commentBodyTextEl.textContent ||
               ""
             ).replace(/[\s\n\r\t]+/g, " ");
 
-            // 문장 맨 앞과 맨 뒤에 붙은 숨은 찌꺼기 여백을 완전히 깎아내어 순수 첫 글자 정렬
             const commentText = rawContent.trim();
 
             if (
@@ -475,7 +576,6 @@ function executeFilterWithMinTime() {
             }
           }
 
-          // [순서 락] 키워드 차단 대상이면 다른 UI 연산 전에 즉시 댓글 컨테이너 추적하여 원천 폭파
           if (shouldKeywordRemove) {
             const totalCommentTarget =
               comment.closest("li, div.comment-item") || comment;
@@ -495,7 +595,6 @@ function executeFilterWithMinTime() {
             return;
           }
 
-          // 2. 유저 고유 고정 ID 차단선 집행
           let currentMemberId = "";
           if (nicknameElement) {
             const match = nicknameElement.className.match(/member_(\d+)/);
@@ -509,10 +608,28 @@ function executeFilterWithMinTime() {
             blockedMemberIds.length > 0 &&
             blockedMemberIds.includes(currentMemberId)
           ) {
+            if (
+              nicknameElement &&
+              !comment.querySelector(`.ext-badge-id-${currentMemberId}`)
+            ) {
+              const userObj = blockedUsers.find(
+                (u) => String(u.member_num) === String(currentMemberId),
+              );
+              if (userObj && userObj.memo && userObj.memo.trim() !== "") {
+                const blockBadge = createMemoBadgeElement(
+                  currentMemberId,
+                  userObj.memo.trim(),
+                  "red-solid",
+                );
+                if (blockBadge) nicknameElement.after(blockBadge);
+              }
+            }
+
             const totalCommentTarget =
               comment.closest("li, div.comment-item") || comment;
             if (totalCommentTarget.dataset.extFiltered) return;
             totalCommentTarget.dataset.extFiltered = "true";
+
             if (isBlindMode) {
               const cacheHTML = totalCommentTarget.innerHTML;
               totalCommentTarget.innerHTML = buildBlindWrapperHTML(
@@ -520,30 +637,30 @@ function executeFilterWithMinTime() {
                 cacheHTML,
               );
               attachBlindToggleEvents(totalCommentTarget);
+            } else if (isBadgeMode) {
+              totalCommentTarget.style.backgroundColor = "#fff1f2";
+              totalCommentTarget.classList.add("ext-blocked-user-layout");
             } else {
               totalCommentTarget.remove();
             }
             return;
           }
 
-          // 3. 차단망을 완벽히 통과한 클린 유저에게만 최종 메모 배지 부착
           if (nicknameElement && currentMemberId && memos[currentMemberId]) {
             if (
-              nicknameElement.nextElementSibling?.classList.contains(
-                "ext-user-memo-badge",
-              )
-            )
-              return;
-            const memoData = getMemoData(currentMemberId);
-            const badge = createMemoBadgeElement(
-              currentMemberId,
-              memoData.text,
-              memoData.style,
-            );
-            if (badge) nicknameElement.after(badge);
+              nicknameElement &&
+              !comment.querySelector(`.ext-badge-id-${currentMemberId}`)
+            ) {
+              const memoData = getMemoData(currentMemberId);
+              const badge = createMemoBadgeElement(
+                currentMemberId,
+                memoData.text,
+                memoData.style,
+              );
+              if (badge) nicknameElement.after(badge);
+            }
           }
 
-          // 4. 컨텍스트 우클릭 드롭다운 차단 메뉴 바인딩
           if (nicknameElement && currentMemberId) {
             const nicknameText = nicknameElement.textContent.trim();
             const dropdownMenu = comment.querySelector("ul.dropdown-menu");
@@ -764,7 +881,7 @@ function executeFilterWithMinTime() {
   });
 }
 
-// 4. 개드립콘 컨텍스트 메뉴 제어 (구조 유지)
+// 4. 개드립콘 컨텍스트 메뉴 제어
 function openDogconMenu(e, dataEl, isAlreadyBlocked) {
   const menu = document.getElementById("ext-dogcon-menu");
   currentActiveDogconData = {
@@ -883,7 +1000,6 @@ function closeBlockModal() {
   if (reasonInput) reasonInput.value = "";
 }
 
-// 💡 [수정 구역] 닉네임 클릭 수동 차단 컨텍스트 메뉴 처리반 (신형 3단 JSON 객체 직렬화 포맷 적재 완비)
 function bindBlockModalEvents() {
   const confirmBtn = document.getElementById("modal-confirm-btn");
   const cancelBtn = document.getElementById("modal-cancel-btn");
@@ -907,7 +1023,6 @@ function bindBlockModalEvents() {
       const reasonInput = document.getElementById("ext-block-reason-input");
       const blockReason = reasonInput ? reasonInput.value.trim() : "";
 
-      // 📦 유저님이 확립하신 { date, member_num, memo } 구조체 포맷 그대로 마스터 패키징
       const newBlockUserObj = {
         date: "2026/05/19",
         member_num: String(targetMemberIdToBlock).trim(),
@@ -1247,10 +1362,8 @@ window.addEventListener("load", () => {
   }
 });
 
-// ⌨️ 전역 키보드 이벤트 리스너: ESC 누르면 활성화된 모달 닫기
 document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" || e.key === "Esc") {
-    // 1. 차단 모달이 열려 있으면 닫기
     const blockModal = document.getElementById("ext-block-modal");
     if (blockModal && blockModal.style.display === "flex") {
       if (typeof closeBlockModal === "function") {
@@ -1260,7 +1373,6 @@ document.addEventListener("keydown", (e) => {
       }
     }
 
-    // 2. 유저 메모 모달이 열려 있으면 닫기
     const memoModal =
       document.getElementById("ext-ext-memo-modal") ||
       document.getElementById("ext-memo-modal");

@@ -37,15 +37,22 @@
           <div style="font-weight: bold">버그/의견 제보</div>
           <a
             style="display: block"
-            href="https://www.dogdrip.net/702437079"
-            class="update-link"
-            >개드립</a
-          >
-          <a
-            style="display: block"
             href="https://github.com/z3ro2201/dogdrip-plus/issues"
             class="update-link"
             >GitHub Issues</a
+          >
+          <a
+            id="check-update-link"
+            href="#"
+            target="_blank"
+            style="
+              display: block;
+              margin-top: 4px;
+              color: #0284c7;
+              text-decoration: none;
+              font-weight: 700;
+            "
+            >크롬 웹스토어</a
           >
         </div>
         <hr />
@@ -53,17 +60,6 @@
         <div>
           <div class="popup-footer" style="margin-top: 10px; font-size: 11px">
             버전: <span id="ext-version" style="font-weight: 700">v 0.0.0</span>
-            <a
-              id="check-update-link"
-              href="https://github.com/z3ro2201/dogdrip-plus"
-              target="_blank"
-              style="
-                display: block;
-                margin-top: 4px;
-                color: #0284c7;
-                text-decoration: none;
-              "
-            ></a>
           </div>
           <a
             id="check-update-link"
@@ -294,7 +290,7 @@
                 border-top: 1px dashed #cbd5e1;
               "
             >
-              <h2>🚫 차단 사용자 처리 방식</h2>
+              <h2>🚫 사용자 차단 처리 방식</h2>
               <div class="block-method-container">
                 <label class="radio-item"
                   ><input
@@ -317,6 +313,15 @@
                     >내용을 숨기고 "차단된 사용자의 글/댓글입니다" 가림막 노출
                     (클릭 시 토글 열람)</span
                   ></label
+                >
+                <label class="radio-item"
+                  ><input
+                    type="radio"
+                    name="ext-block-method"
+                    id="block-method-badge"
+                    value="badge"
+                  /><span class="radio-mark"></span
+                  ><span>글 유지하고 배지만 보기</span></label
                 >
               </div>
             </div>
