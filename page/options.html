@@ -18,7 +18,7 @@
       <div class="nav-item active" data-target="card-keyword">
         🚫 차단 키워드
       </div>
-      <div class="nav-item" data-target="card-nickname">👤 차단 닉네임</div>
+      <div class="nav-item" data-target="card-nickname">👤 사용자 차단</div>
       <div class="nav-item" data-target="card-memo">📝 유저 메모 관리</div>
       <div class="nav-item" data-target="card-dogcon">
         🖼️ 차단 개드립콘 (단일)
@@ -29,9 +29,7 @@
       <div class="nav-item" data-target="card-layout">
         📐 레이아웃 및 기능 설정
       </div>
-      <div class="nav-item" data-target="card-system">
-        💾 시스템 백업 / 로드
-      </div>
+      <div class="nav-item" data-target="card-system">💾 시스템</div>
 
       <div class="sidebar-footer">
         <hr />
@@ -54,8 +52,7 @@
         <div style="font-weight: bold">확장프로그램 정보</div>
         <div>
           <div class="popup-footer" style="margin-top: 10px; font-size: 11px">
-            버전:
-            <span id="ext-version" style="font-weight: 700">v 0.0.0</span>
+            버전: <span id="ext-version" style="font-weight: 700">v 0.0.0</span>
             <a
               id="check-update-link"
               href="https://github.com/z3ro2201/dogdrip-plus"
@@ -87,23 +84,131 @@
       <div class="content-panel">
         <div class="dashboard-card active" id="card-keyword">
           <div class="card-header">
-            <h2>🚫 차단 키워드 목록 관리</h2>
+            <h2>🚫 조건별 키워드 차단 목록 관리</h2>
             <p>
-              이곳에 설정 된 키워드가 제목에 포함되면 게시글 목록에서 안보이게
-              됩니다.
+              등록된 키워드별로 **타겟 영역(전체/댓글/게시글)** 및 **매칭
+              방식(포함/시작단어)** 조건에 맞춰 목록을 정밀 필터링합니다.
             </p>
+
+            <div
+              class="ext-keyword-add-form-container"
+              style="
+                display: flex;
+                gap: 8px;
+                align-items: center;
+                background: #f8fafc;
+                padding: 12px;
+                border-radius: 8px;
+                border: 1px solid #e2e8f0;
+                margin-top: 14px;
+                margin-bottom: 14px;
+                flex-wrap: wrap;
+              "
+            >
+              <input
+                type="text"
+                id="ext-new-keyword-input"
+                placeholder="차단할 키워드 입력..."
+                style="
+                  flex-grow: 1;
+                  min-width: 160px;
+                  padding: 6px 12px;
+                  border: 1px solid #cbd5e1;
+                  border-radius: 6px;
+                  font-size: 13px;
+                "
+              />
+
+              <select
+                id="ext-new-keyword-method"
+                style="
+                  padding: 6px;
+                  border: 1px solid #cbd5e1;
+                  border-radius: 6px;
+                  font-size: 13px;
+                  background: #fff;
+                  cursor: pointer;
+                "
+              >
+                <option value="includes">포함</option>
+                <option value="starts">시작</option>
+              </select>
+
+              <select
+                id="ext-new-keyword-target"
+                style="
+                  padding: 6px;
+                  border: 1px solid #cbd5e1;
+                  border-radius: 6px;
+                  font-size: 13px;
+                  background: #fff;
+                  cursor: pointer;
+                "
+              >
+                <option value="all">전체(댓글, 제목)</option>
+                <option value="comments">댓글</option>
+                <option value="posts">제목</option>
+              </select>
+
+              <button
+                id="ext-new-keyword-add-btn"
+                style="
+                  padding: 6px 16px;
+                  background: #1e293b;
+                  color: #fff;
+                  border: none;
+                  border-radius: 6px;
+                  font-size: 13px;
+                  font-weight: bold;
+                  cursor: pointer;
+                  white-space: nowrap;
+                "
+              >
+                추가
+              </button>
+            </div>
+
+            <div class="search-box-container" style="margin-top: 12px">
+              <input
+                type="text"
+                id="ext-keyword-search-input"
+                placeholder="🔍 차단 키워드명으로 검색..."
+                style="
+                  width: 100%;
+                  max-width: 300px;
+                  padding: 6px 12px;
+                  border: 1px solid #cbd5e1;
+                  border-radius: 6px;
+                  font-size: 13px;
+                "
+              />
+            </div>
           </div>
           <div id="keyword-list" class="list-container"></div>
         </div>
 
         <div class="dashboard-card" id="card-nickname">
           <div class="card-header">
-            <h2>👤 차단 닉네임 목록 관리</h2>
+            <h2>👤 차단 된 사용자 목록 관리</h2>
             <p>
-              이곳에 설정 된 사용자는 게시글 및 댓글 목록에 보이지 않게
-              됩니다.<br />(닉네임을 변경하여도 memberId 값을 기반으로 차단하기
-              때문에 보이지 않습니다.)
+              이곳에 설정 된 사용자는 게시글 및 댓글 목록에 보이지 않게 됩니다.
             </p>
+
+            <div class="search-box-container" style="margin-top: 12px">
+              <input
+                type="text"
+                id="ext-user-search-input"
+                placeholder="🔍 차단 사유(메모) 내용으로 검색..."
+                style="
+                  width: 100%;
+                  max-width: 300px;
+                  padding: 6px 12px;
+                  border: 1px solid #cbd5e1;
+                  border-radius: 6px;
+                  font-size: 13px;
+                "
+              />
+            </div>
           </div>
           <div id="nickname-list" class="list-container"></div>
         </div>
@@ -112,9 +217,9 @@
           <div class="card-header">
             <h2>📝 유저 메모 목록 관리</h2>
             <p>
-              개드립 본섭에서 등록했던 사용자들의 고유 메모 리스트입니다.<br />
-              등록된 메모 배지를 누르면 내용을 간편하게 즉시 수정하거나 삭제할
-              수 있습니다.
+              개드립에서 등록했던 사용자들의 고유 메모 리스트입니다.<br />등록된
+              메모 배지를 누르면 내용을 간편하게 즉시 수정하거나 삭제할 수
+              있습니다.
             </p>
           </div>
           <div
@@ -149,33 +254,37 @@
           </div>
           <div class="setting-container">
             <div class="options-checkbox-group">
-              <label class="checkbox-item">
-                <input type="checkbox" id="hide-notice-cb" />
-                <span>공지사항 목록 가리기</span>
-              </label>
-              <label class="checkbox-item">
-                <input type="checkbox" id="hide-popular-cb" />
-                <span>인기글 리스트 가리기</span>
-              </label>
-              <label class="checkbox-item">
-                <input type="checkbox" id="hide-sidebar-cb" />
-                <span>우측 배너 사이드바 가리기</span>
-              </label>
-              <label class="checkbox-item">
-                <input type="checkbox" id="compact-mode-cb" />
-                <span>컴팩트 대화면 모드 연동</span>
-              </label>
-              <label class="checkbox-item">
-                <input type="checkbox" id="disable-vote-cb" />
-                <span
+              <label class="checkbox-item"
+                ><input type="checkbox" id="hide-notice-cb" /><span
+                  >공지사항 목록 가리기</span
+                ></label
+              >
+              <label class="checkbox-item"
+                ><input type="checkbox" id="hide-popular-cb" /><span
+                  >인기글 리스트 가리기</span
+                ></label
+              >
+              <label class="checkbox-item"
+                ><input type="checkbox" id="hide-sidebar-cb" /><span
+                  >우측 배너 사이드바 가리기</span
+                ></label
+              >
+              <label class="checkbox-item"
+                ><input type="checkbox" id="compact-mode-cb" /><span
+                  >컴팩트 대화면 모드 연동</span
+                ></label
+              >
+              <label class="checkbox-item"
+                ><input type="checkbox" id="disable-vote-cb" /><span
                   >추천 및 비추천 인터페이스 비활성화 (아기 이모지로
                   변경됨)</span
-                >
-              </label>
-              <label class="checkbox-item">
-                <input type="checkbox" id="preventYoutubeAlgorithm" />
-                <span>유튜브 플레이어 임베드 알고리즘 방어</span>
-              </label>
+                ></label
+              >
+              <label class="checkbox-item"
+                ><input type="checkbox" id="preventYoutubeAlgorithm" /><span
+                  >유튜브 플레이어 임베드 알고리즘 방어</span
+                ></label
+              >
             </div>
 
             <div
@@ -187,30 +296,28 @@
             >
               <h2>🚫 차단 사용자 처리 방식</h2>
               <div class="block-method-container">
-                <label class="radio-item">
-                  <input
+                <label class="radio-item"
+                  ><input
                     type="radio"
                     name="ext-block-method"
                     id="block-method-remove"
                     value="remove"
                     checked
-                  />
-                  <span class="radio-mark"></span>
-                  <span>흔적 없이 목록과 화면에서 아예 삭제</span>
-                </label>
-                <label class="radio-item">
-                  <input
+                  /><span class="radio-mark"></span
+                  ><span>흔적 없이 목록과 화면에서 아예 삭제</span></label
+                >
+                <label class="radio-item"
+                  ><input
                     type="radio"
                     name="ext-block-method"
                     id="block-method-blind"
                     value="blind"
-                  />
-                  <span class="radio-mark"></span>
-                  <span
+                  /><span class="radio-mark"></span
+                  ><span
                     >내용을 숨기고 "차단된 사용자의 글/댓글입니다" 가림막 노출
                     (클릭 시 토글 열람)</span
-                  >
-                </label>
+                  ></label
+                >
               </div>
             </div>
 
@@ -270,8 +377,8 @@
           <div class="card-header">
             <h2>💾 데이터 백업하기</h2>
             <p>
-              개드립콘 절약모드 혹은 색상반전 모드를 제외한 차단 대상(키워드,
-              사용자, 개드립콘)과 기본 설정값이 저장됩니다.
+              개드립콘 절약모드 혹은 색상반전 모드를 제외한 차단 대상과 기본
+              설정값이 저장됩니다.
             </p>
           </div>
           <div class="backup-footer">
@@ -303,6 +410,31 @@
           <input
             type="file"
             id="file-input"
+            accept=".json"
+            style="display: none"
+          />
+        </div>
+
+        <div class="dashboard-card" id="card-system" style="margin-top: 1rem">
+          <div class="card-header">
+            <h2>🔗 Dogdrip++ 데이터 호환 가져오기</h2>
+            <p>
+              타 확장프로그램(Dogdrip++)에서 내보낸 백업(.json) 파일을 분석하여
+              현재 설정을 유지한 채 **차단 사용자 및 키워드 데이터만
+              복원**합니다.
+            </p>
+          </div>
+          <div class="backup-footer">
+            <button
+              id="ext-dogdrip-plus-plus-restore-btn"
+              style="background-color: #7c3aed; color: white"
+            >
+              Dogdrip++ 데이터 가져오기 (.json)
+            </button>
+          </div>
+          <input
+            type="file"
+            id="ext-plus-plus-file-input"
             accept=".json"
             style="display: none"
           />
@@ -408,6 +540,153 @@
       </div>
     </div>
 
+    <div
+      id="ext-dashboard-keyword-edit-popup"
+      style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.3);
+        align-items: center;
+        justify-content: center;
+        z-index: 10000;
+      "
+    >
+      <div
+        style="
+          background: #fff;
+          padding: 20px;
+          border-radius: 12px;
+          width: 340px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        "
+      >
+        <p
+          style="
+            margin-top: 0;
+            font-weight: bold;
+            font-size: 14px;
+            color: #111827;
+          "
+        >
+          ⚙️ 차단 키워드 조건 설정 수정
+        </p>
+
+        <div style="margin-bottom: 12px">
+          <label
+            style="
+              display: block;
+              font-size: 11px;
+              font-weight: bold;
+              color: #64748b;
+              margin-bottom: 4px;
+            "
+            >키워드명</label
+          >
+          <input
+            type="text"
+            id="ext-keyword-popup-word-input"
+            style="
+              width: 100%;
+              padding: 6px 10px;
+              border: 1px solid #cbd5e1;
+              border-radius: 6px;
+              font-size: 13px;
+              box-sizing: border-box;
+            "
+          />
+        </div>
+
+        <div style="margin-bottom: 12px">
+          <label
+            style="
+              display: block;
+              font-size: 11px;
+              font-weight: bold;
+              color: #64748b;
+              margin-bottom: 4px;
+            "
+            >매칭 조건</label
+          >
+          <select
+            id="ext-keyword-popup-method-select"
+            style="
+              width: 100%;
+              padding: 6px;
+              border: 1px solid #cbd5e1;
+              border-radius: 6px;
+              font-size: 13px;
+            "
+          >
+            <option value="includes">포함</option>
+            <option value="starts">시작</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom: 18px">
+          <label
+            style="
+              display: block;
+              font-size: 11px;
+              font-weight: bold;
+              color: #64748b;
+              margin-bottom: 4px;
+            "
+            >차단 대상</label
+          >
+          <select
+            id="ext-keyword-popup-target-select"
+            style="
+              width: 100%;
+              padding: 6px;
+              border: 1px solid #cbd5e1;
+              border-radius: 6px;
+              font-size: 13px;
+            "
+          >
+            <option value="all">전체(댓글, 제목)</option>
+            <option value="comments">댓글</option>
+            <option value="posts">제목</option>
+          </select>
+        </div>
+
+        <div style="display: flex; gap: 6px; justify-content: flex-end">
+          <button
+            id="ext-keyword-popup-save-btn"
+            style="
+              padding: 6px 14px;
+              background: #3b82f6;
+              color: #fff;
+              border: none;
+              border-radius: 6px;
+              font-size: 12px;
+              font-weight: bold;
+              cursor: pointer;
+            "
+          >
+            저장
+          </button>
+          <button
+            id="ext-keyword-popup-cancel-btn"
+            style="
+              padding: 6px 14px;
+              background: #e5e7eb;
+              color: #4b5563;
+              border: none;
+              border-radius: 6px;
+              font-size: 12px;
+              font-weight: bold;
+              cursor: pointer;
+            "
+          >
+            취소
+          </button>
+        </div>
+      </div>
+    </div>
     <script src="/js/options.js"></script>
     <script src="/js/version_check.js"></script>
   </body>

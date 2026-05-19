@@ -11,7 +11,6 @@ const loadingOverlay = document.createElement("div");
 loadingOverlay.id = "ext-loading-overlay";
 loadingOverlay.innerHTML = `<div class="spinner"></div><div class="loading-text">페이지 최적화 중...</div>`;
 
-// ① 수동 차단 확인 및 사유 입력 모달
 const blockModal = document.createElement("div");
 blockModal.id = "ext-block-modal";
 blockModal.style.display = "none";
@@ -29,14 +28,13 @@ blockModal.innerHTML = `
     </div>
 `;
 
-// ② 수동 메모 작성, 수정, 삭제 및 컬러 팔레트 픽커 통합 모달창
 const memoModal = document.createElement("div");
 memoModal.id = "ext-memo-modal";
 memoModal.className = "ext-custom-modal-layout";
 memoModal.style.cssText =
   "position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 100002;";
 memoModal.innerHTML = `
-    <div class="modal-content" style="background: #fff; padding: 20px; border-radius: 12px; width: 90%; max-width: 380px; box-shadow: 0 4px 16px rgba(0,0,0,0.15);">
+    <div class="modal-content" style="background: #fff; padding: 20px; border-radius: 12px; width: 90%; max-width: 380px; box-shadow: 0 4px 166px rgba(0,0,0,0.15);">
         <p style="margin-top: 0; font-weight: bold; font-size: 14px; color: #111827;" id="ext-memo-modal-title"></p>
         <div class="input-group" style="margin: 14px 0 8px 0;">
           <input type="text" id="ext-user-memo-modal-input" placeholder="이 사용자에 대한 메모를 입력하세요..." style="width: 100%; padding: 8px 12px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 13px; box-sizing: border-box;" />
@@ -81,7 +79,7 @@ function injectInitialUI() {
         : dogconContextMenu,
     );
     bindReasonInputGuard();
-    bindBlockModalEvents(); // 💡 차단 모달 이벤트 바인딩 복구
+    bindBlockModalEvents();
     bindMemoModalEvents();
     return true;
   }
@@ -99,11 +97,7 @@ let targetNicknameToBlock = "";
 let targetMemberIdToBlock = "";
 let targetMemoMemberId = "";
 let selectedMemoColorStyle = "blue";
-
-let lastClickedUserData = {
-  memberId: "",
-  nickname: "",
-};
+let lastClickedUserData = { memberId: "", nickname: "" };
 
 function bindReasonInputGuard() {
   const reasonInput = document.getElementById("ext-block-reason-input");
@@ -127,9 +121,7 @@ function buildBlindWrapperHTML(typeLabel, originalHTML) {
         <span>🛡️ 차단된 사용자의 ${typeLabel}입니다.</span>
         <a href="#" class="ext-blind-toggle-btn" onclick="return false;" style="color: #0284c7; text-decoration: underline; font-weight: bold; font-size: 12px;">📄 내용 보기</a>
       </div>
-      <div class="ext-blind-body" style="display: none; margin-top: 10px; border-top: 1px dashed #e2e8f0; padding-top: 10px;">
-        ${originalHTML}
-      </div>
+      <div class="ext-blind-body" style="display: none; margin-top: 10px; border-top: 1px dashed #e2e8f0; padding-top: 10px;">${originalHTML}</div>
     </div>
   `;
 }
@@ -157,20 +149,54 @@ function attachBlindToggleEvents(container) {
 
 function createMemoBadgeElement(memberId, memoText, colorStyle) {
   if (!memoText) return null;
-
   const existingBadge = document.getElementById(`ext-memo-badge-${memberId}`);
   if (existingBadge) existingBadge.remove();
-
   const badge = document.createElement("span");
   badge.id = `ext-memo-badge-${memberId}`;
-
   const finalColor = colorStyle || "blue";
-
   badge.className = `ext-user-memo-badge ext-memo-${finalColor}`;
   badge.innerText = memoText;
   badge.title = `메모: ${memoText}\n(회원번호: ${memberId})`;
-
   return badge;
+}
+
+// 조건형 키워드 대조 매칭 엔진 (💡 시작단어/포함단어 엄격 격리 정상화 버전)
+function checkKeywordMatchCondition(titleText, keywordObj, targetArea) {
+  if (!titleText || !keywordObj) return false;
+
+  const word =
+    typeof keywordObj === "string"
+      ? keywordObj
+      : keywordObj.word || keywordObj.keyword;
+  const method = keywordObj.method || "includes";
+  const target = keywordObj.target || "all";
+
+  // 1. 타겟 영역(posts / comments) 매칭 검사
+  const normalizedTarget =
+    target === "post" ? "posts" : target === "comment" ? "comments" : target;
+  if (normalizedTarget !== "all" && normalizedTarget !== targetArea)
+    return false;
+
+  // 2. 🛡️ 본문 문자열 정밀 청소 및 양끝 공백 제거 (유령 문자 및 제어 기호 완전 분쇄)
+  let cleanText = titleText.replace(/[\s\n\r\t]+/g, " ");
+  cleanText = cleanText
+    .replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E]/g, "")
+    .trim();
+  const cleanWord = word.trim();
+
+  // 3. 🚫 [조건 정밀 분기] 각 모드별 독립 연산 집행
+
+  // ① [포함단어] 설정 시 ➡️ 문장 내부 어디든 들어가기만 하면 차단 (true)
+  if (method === "includes") {
+    return cleanText.includes(cleanWord);
+  }
+
+  // ② [시작단어] 설정 시 ➡️ ★ 오직 문장의 '맨 첫머리'로 시작할 때만 차단 (true)
+  if (method === "starts") {
+    return cleanText.startsWith(cleanWord);
+  }
+
+  return false;
 }
 
 // 3. 종합 필터링 및 레이아웃 제어 집행부
@@ -181,7 +207,7 @@ function executeFilterWithMinTime() {
     chrome.storage.local.get(
       [
         "keywords",
-        "nicknames",
+        "blocked_users",
         "blockedDogcons",
         "blockedDogconGroups",
         "hideNotice",
@@ -197,19 +223,14 @@ function executeFilterWithMinTime() {
       (result) => {
         if (chrome.runtime?.lastError) return;
         const filterKeywords = result.keywords || [];
-        const rawFilterNicknames = result.nicknames || [];
+        const blockedUsers = result.blocked_users || [];
         const blockedDogcons = result.blockedDogcons || [];
         const blockedDogconGroups = result.blockedDogconGroups || [];
         const isBlindMode = result.blockMethod === "blind";
         const memos = result.userMemos || {};
 
-        const blockedMemberIds = rawFilterNicknames
-          .map((item) => {
-            if (item.includes(":")) {
-              return item.split(":")[0].trim();
-            }
-            return "";
-          })
+        const blockedMemberIds = blockedUsers
+          .map((u) => String(u.member_num).trim())
           .filter((id) => id !== "");
 
         const blockedDogconIds = blockedDogcons.map((item) => item.id);
@@ -247,7 +268,7 @@ function executeFilterWithMinTime() {
           return { text: rawData, style: "blue" };
         }
 
-        // ① 웹진형 레이아웃 필터 및 메모 배지 인젝션
+        // ① 웹진형 레이아웃 필터 (타겟: posts)
         document.querySelectorAll("li.webzine").forEach((article) => {
           const titleElement = article.querySelector(".title-link");
           const nicknameElement = article.querySelector('a[class*="member_"]');
@@ -256,8 +277,13 @@ function executeFilterWithMinTime() {
 
           if (titleElement && filterKeywords.length > 0) {
             const titleText = titleElement.textContent.trim();
-            if (filterKeywords.some((keyword) => titleText.includes(keyword)))
+            if (
+              filterKeywords.some((kw) =>
+                checkKeywordMatchCondition(titleText, kw, "posts"),
+              )
+            ) {
               shouldRemove = true;
+            }
           }
 
           let currentMemberId = "";
@@ -299,14 +325,16 @@ function executeFilterWithMinTime() {
           }
         });
 
-        // ② 최근 게시물 목록 필터링 (키워드 전용)
+        // ② 최근 게시물 목록 필터링 (타겟: posts)
         if (filterKeywords.length > 0) {
           document
             .querySelectorAll("li div.eq span.text-link")
             .forEach((span) => {
               const titleText = span.textContent.trim();
               if (
-                filterKeywords.some((keyword) => titleText.includes(keyword))
+                filterKeywords.some((kw) =>
+                  checkKeywordMatchCondition(titleText, kw, "posts"),
+                )
               ) {
                 const parentLi = span.closest("li");
                 if (parentLi) parentLi.remove();
@@ -314,18 +342,22 @@ function executeFilterWithMinTime() {
             });
         }
 
-        // ③ 페이지별 인기글 목록 필터링 (키워드 전용)
+        // ③ 페이지별 인기글 목록 필터링 (타겟: posts)
         if (filterKeywords.length > 0) {
           document.querySelectorAll("li span.title a").forEach((link) => {
             const titleText = link.textContent.trim();
-            if (filterKeywords.some((keyword) => titleText.includes(keyword))) {
+            if (
+              filterKeywords.some((kw) =>
+                checkKeywordMatchCondition(titleText, kw, "posts"),
+              )
+            ) {
               const parentLi = link.closest("li");
               if (parentLi) parentLi.remove();
             }
           });
         }
 
-        // ④ 테이블형 레이아웃 필터 및 메모 배지 인젝션 (tr.ed)
+        // ④ 테이블형 레이아웃 필터 (tr.ed) (타겟: posts) 💡 [카테고리 및 댓글수 오염 완치 버전]
         document.querySelectorAll("tr.ed").forEach((row) => {
           const titleElement = row.querySelector(".title");
           const authorElement = row.querySelector(
@@ -335,9 +367,43 @@ function executeFilterWithMinTime() {
           let shouldBlind = false;
 
           if (titleElement && filterKeywords.length > 0) {
-            const titleText = titleElement.textContent.trim();
-            if (filterKeywords.some((keyword) => titleText.includes(keyword)))
+            // 💡 [초정밀 제목 추출] 카테고리([잡담])와 댓글 수(23)를 제외한 진짜 제목 링크(.title-link) 구역만 조준합니다.
+            // 만약 디폴트 스킨에 .title-link 클래스가 없으면 차선책으로 전체 textContent에서 댓글수 배지를 깎아냅니다.
+            const realTitleLink = titleElement.querySelector(".title-link");
+            let titleText = "";
+
+            if (realTitleLink) {
+              titleText = realTitleLink.textContent.trim();
+            } else {
+              // 🛡️ Fallback 가드: 링크 내부를 뒤져서 댓글수와 카테고리를 제외한 순수 텍스트만 병합
+              const mainLink = titleElement.querySelector(
+                'a[href*="dogdrip.net/"], a[href^="/"]',
+              );
+              if (mainLink) {
+                // 댓글 수 배지(.text-primary)를 제외한 텍스트만 스캔
+                let cloneLink = mainLink.cloneNode(true);
+                const replyBadge = cloneLink.querySelector(".text-primary");
+                if (replyBadge) replyBadge.remove();
+                titleText = cloneLink.textContent
+                  .replace(/\[.*?\]/g, "")
+                  .trim(); // 카테고리 괄호 문자열까지 삭제
+              } else {
+                titleText = titleElement.textContent.trim();
+              }
+            }
+
+            // 앞뒤 보이지 않는 유령 문자 및 특수 공백 세척 마감
+            const cleanTitleText = titleText
+              .replace(/[\s\n\r\t]+/g, " ")
+              .trim();
+
+            if (
+              filterKeywords.some((kw) =>
+                checkKeywordMatchCondition(cleanTitleText, kw, "posts"),
+              )
+            ) {
               shouldRemove = true;
+            }
           }
 
           let currentMemberId = "";
@@ -379,33 +445,88 @@ function executeFilterWithMinTime() {
           }
         });
 
-        // ⑤ 댓글 영역 필터 및 메모 배지 인젝션
+        // ⑤ 댓글 영역 필터 (타겟: comments) 💡 [개드립 xe_content 마크업 공백 노이즈 완전 파괴판]
         document.querySelectorAll(".ed.comment-content").forEach((comment) => {
           const nicknameElement = comment.querySelector('a[class*="member_"]');
-          let currentMemberId = "";
+          let shouldKeywordRemove = false;
 
+          // 🛡️ [과녁 정밀 보정] 개드립 특유의 댓글 본문 클래스인 .xe_content를 1순위로 다이렉트 타겟팅합니다.
+          const commentBodyTextEl = comment.querySelector(
+            ".xe_content, .comment-text",
+          );
+
+          if (commentBodyTextEl && filterKeywords.length > 0) {
+            // 💡 [초정밀 스크럽] innerText 내부의 가짜 줄바꿈 노이즈(\n, \r)를 즉시 순수 빈칸으로 압축 분쇄합니다.
+            const rawContent = (
+              commentBodyTextEl.innerText ||
+              commentBodyTextEl.textContent ||
+              ""
+            ).replace(/[\s\n\r\t]+/g, " ");
+
+            // 문장 맨 앞과 맨 뒤에 붙은 숨은 찌꺼기 여백을 완전히 깎아내어 순수 첫 글자 정렬
+            const commentText = rawContent.trim();
+
+            if (
+              filterKeywords.some((kw) =>
+                checkKeywordMatchCondition(commentText, kw, "comments"),
+              )
+            ) {
+              shouldKeywordRemove = true;
+            }
+          }
+
+          // [순서 락] 키워드 차단 대상이면 다른 UI 연산 전에 즉시 댓글 컨테이너 추적하여 원천 폭파
+          if (shouldKeywordRemove) {
+            const totalCommentTarget =
+              comment.closest("li, div.comment-item") || comment;
+            if (totalCommentTarget.dataset.extFiltered) return;
+            totalCommentTarget.dataset.extFiltered = "true";
+
+            if (isBlindMode) {
+              const cacheHTML = totalCommentTarget.innerHTML;
+              totalCommentTarget.innerHTML = buildBlindWrapperHTML(
+                "키워드가 포함된 댓글",
+                cacheHTML,
+              );
+              attachBlindToggleEvents(totalCommentTarget);
+            } else {
+              totalCommentTarget.remove();
+            }
+            return;
+          }
+
+          // 2. 유저 고유 고정 ID 차단선 집행
+          let currentMemberId = "";
           if (nicknameElement) {
             const match = nicknameElement.className.match(/member_(\d+)/);
             if (match) {
               currentMemberId = match[1];
-              if (
-                blockedMemberIds.length > 0 &&
-                blockedMemberIds.includes(currentMemberId)
-              ) {
-                if (comment.dataset.extFiltered) return;
-                comment.dataset.extFiltered = "true";
-                if (isBlindMode) {
-                  const cacheHTML = comment.innerHTML;
-                  comment.innerHTML = buildBlindWrapperHTML("댓글", cacheHTML);
-                  attachBlindToggleEvents(comment);
-                } else {
-                  comment.remove();
-                }
-                return;
-              }
             }
           }
 
+          if (
+            currentMemberId &&
+            blockedMemberIds.length > 0 &&
+            blockedMemberIds.includes(currentMemberId)
+          ) {
+            const totalCommentTarget =
+              comment.closest("li, div.comment-item") || comment;
+            if (totalCommentTarget.dataset.extFiltered) return;
+            totalCommentTarget.dataset.extFiltered = "true";
+            if (isBlindMode) {
+              const cacheHTML = totalCommentTarget.innerHTML;
+              totalCommentTarget.innerHTML = buildBlindWrapperHTML(
+                "댓글",
+                cacheHTML,
+              );
+              attachBlindToggleEvents(totalCommentTarget);
+            } else {
+              totalCommentTarget.remove();
+            }
+            return;
+          }
+
+          // 3. 차단망을 완벽히 통과한 클린 유저에게만 최종 메모 배지 부착
           if (nicknameElement && currentMemberId && memos[currentMemberId]) {
             if (
               nicknameElement.nextElementSibling?.classList.contains(
@@ -422,6 +543,7 @@ function executeFilterWithMinTime() {
             if (badge) nicknameElement.after(badge);
           }
 
+          // 4. 컨텍스트 우클릭 드롭다운 차단 메뉴 바인딩
           if (nicknameElement && currentMemberId) {
             const nicknameText = nicknameElement.textContent.trim();
             const dropdownMenu = comment.querySelector("ul.dropdown-menu");
@@ -441,7 +563,7 @@ function executeFilterWithMinTime() {
           }
         });
 
-        // ⑥ 게시물 본문 상단 툴바 필터 제어 구역
+        // ⑥ 본문 상단 툴바 필터 제어 구역
         const titleToolbar = document.querySelector(".title-toolbar");
         if (titleToolbar) {
           const authorElement = titleToolbar.querySelector(
@@ -449,11 +571,9 @@ function executeFilterWithMinTime() {
           );
           const dropdownMenu = titleToolbar.querySelector("ul.dropdown-menu");
           if (authorElement && dropdownMenu) {
-            const authorNickname = authorElement.textContent.trim();
-            const match = authorElement.className.match(/member_(\d+)/);
-            if (match) {
-              const authorMemberId = match[1];
-
+            const authorMemberId =
+              authorElement.className.match(/member_(\d+)/)?.[1];
+            if (authorMemberId) {
               if (
                 memos[authorMemberId] &&
                 !authorElement.nextElementSibling?.classList.contains(
@@ -468,12 +588,10 @@ function executeFilterWithMinTime() {
                 );
                 if (badge) authorElement.after(badge);
               }
-
               const existingToolbarBtn = dropdownMenu.querySelector(
                 ".ext-toolbar-member-block",
               );
               if (existingToolbarBtn) existingToolbarBtn.remove();
-
               const blockLi = document.createElement("li");
               blockLi.className = "ext-toolbar-member-block";
 
@@ -489,21 +607,28 @@ function executeFilterWithMinTime() {
                     window.location.reload();
                     return;
                   }
-                  chrome.storage.local.get(["nicknames"], (res) => {
-                    let currentList = res.nicknames || [];
+                  chrome.storage.local.get(["blocked_users"], (res) => {
+                    let currentList = res.blocked_users || [];
                     currentList = currentList.filter(
-                      (item) => !item.startsWith(`${authorMemberId}:`),
+                      (item) =>
+                        String(item.member_num) !== String(authorMemberId),
                     );
-                    chrome.storage.local.set({ nicknames: currentList }, () => {
-                      window.location.reload();
-                    });
+                    chrome.storage.local.set(
+                      { blocked_users: currentList },
+                      () => {
+                        window.location.reload();
+                      },
+                    );
                   });
                 });
               } else {
                 blockLi.innerHTML = `<a class="ext-block-menu-item" href="#popup_menu_area" onclick="return false;" style="color: #${blockColor}; font-weight: bold;"><span class="ed icon"><i class="fas fa-user-slash"></i></span> 차단</a>`;
                 blockLi.querySelector("a").addEventListener("click", (e) => {
                   e.preventDefault();
-                  openBlockModal(authorNickname, authorMemberId);
+                  openBlockModal(
+                    authorElement.textContent.trim(),
+                    authorMemberId,
+                  );
                 });
               }
               dropdownMenu.insertBefore(blockLi, dropdownMenu.firstChild);
@@ -511,7 +636,7 @@ function executeFilterWithMinTime() {
           }
         }
 
-        // ⑦ 개드립콘 처리 구역
+        // ⑦ 개드립콘 처리 구역 등 하단 레거시 로직 보존 집행
         const dogconImgs = document.querySelectorAll(
           "img.dogcon-clickable, img[data-dogcon-srl]",
         );
@@ -566,7 +691,6 @@ function executeFilterWithMinTime() {
           }
         });
 
-        // ⑧ 추천, ⑨ 유튜브, ⑩ 폭제어
         if (result.disableVote === true) {
           document
             .querySelectorAll("td.ed.voteNum.text-primary")
@@ -577,34 +701,31 @@ function executeFilterWithMinTime() {
               }
             });
           document.querySelectorAll("i.far.fa-thumbs-up").forEach((icon) => {
-            if (icon.dataset.extVoteProcessed) return;
-            icon.dataset.extVoteProcessed = "true";
-            icon.className = "fas fa-baby";
-            const iconParentSpan = icon.closest("span.text-primary");
-            if (iconParentSpan) {
-              const nextSpan = iconParentSpan.nextElementSibling;
-              if (nextSpan && nextSpan.classList.contains("text-primary")) {
-                nextSpan.remove();
-              }
+            if (!icon.dataset.extVoteProcessed) {
+              icon.dataset.extVoteProcessed = "true";
+              icon.className = "fas fa-baby";
+              const parent = icon.closest("span.text-primary");
+              if (
+                parent?.nextElementSibling?.classList.contains("text-primary")
+              )
+                parent.nextElementSibling.remove();
             }
           });
           document.querySelectorAll("a.votebtn").forEach((btn) => {
             if (btn.dataset.extVoteProcessed) return;
             btn.dataset.extVoteProcessed = "true";
-            if (btn.getAttribute("title") === "추推薦") {
+            if (btn.getAttribute("title") === "추천") {
               const icon = btn.querySelector("i");
               if (icon) icon.className = "fas fa-baby";
-              const countSpan = btn.querySelector("span.count");
-              if (countSpan) countSpan.remove();
-              const parentSpan = btn.parentElement;
-              if (parentSpan && parentSpan.tagName.toLowerCase() === "span") {
-                parentSpan.parentNode.insertBefore(btn, parentSpan);
-                parentSpan.remove();
+              const count = btn.querySelector("span.count");
+              if (count) count.remove();
+              const parent = btn.parentElement;
+              if (parent?.tagName.toLowerCase() === "span") {
+                parent.parentNode.insertBefore(btn, parent);
+                parent.remove();
               }
             }
-            if (btn.getAttribute("title") === "비추천") {
-              btn.remove();
-            }
+            if (btn.getAttribute("title") === "비추천") btn.remove();
           });
           document.querySelectorAll("a.comment-item-tool").forEach((link) => {
             link.classList.remove("border-left-dotted");
@@ -614,15 +735,17 @@ function executeFilterWithMinTime() {
           document
             .querySelectorAll('iframe[src*="youtube.com/embed/"]')
             .forEach((iframe) => {
-              if (iframe.dataset.extYoutubeProcessed) return;
-              iframe.dataset.extYoutubeProcessed = "true";
-              const currentSrc = iframe.getAttribute("src");
-              if (currentSrc) {
-                const secureSrc = currentSrc.replace(
-                  "youtube.com/embed/",
-                  "youtube-nocookie.com/embed/",
-                );
-                iframe.setAttribute("src", secureSrc);
+              if (!iframe.dataset.extYoutubeProcessed) {
+                iframe.dataset.extYoutubeProcessed = "true";
+                const src = iframe.getAttribute("src");
+                if (src)
+                  iframe.setAttribute(
+                    "src",
+                    src.replace(
+                      "youtube.com/embed/",
+                      "youtube-nocookie.com/embed/",
+                    ),
+                  );
               }
             });
         }
@@ -631,6 +754,7 @@ function executeFilterWithMinTime() {
             el.style.maxWidth = "960px";
           });
         }
+
         resolve();
       },
     );
@@ -640,7 +764,7 @@ function executeFilterWithMinTime() {
   });
 }
 
-// 4. 개드립콘 컨텍스트 메뉴 오버레이 제어
+// 4. 개드립콘 컨텍스트 메뉴 제어 (구조 유지)
 function openDogconMenu(e, dataEl, isAlreadyBlocked) {
   const menu = document.getElementById("ext-dogcon-menu");
   currentActiveDogconData = {
@@ -737,13 +861,11 @@ function handleGroupBlockToggle() {
   });
 }
 
-// 💡 [개드립 회원 차단 모달 팝업 제어반 복구 마감]
 function openBlockModal(nickname, memberId) {
   targetNicknameToBlock = nickname;
   targetMemberIdToBlock = memberId;
   const reasonInput = document.getElementById("ext-block-reason-input");
   if (reasonInput) reasonInput.value = "";
-
   const msgEl = document.getElementById("modal-msg");
   const modalEl = document.getElementById("ext-block-modal");
   if (msgEl && modalEl) {
@@ -761,10 +883,10 @@ function closeBlockModal() {
   if (reasonInput) reasonInput.value = "";
 }
 
+// 💡 [수정 구역] 닉네임 클릭 수동 차단 컨텍스트 메뉴 처리반 (신형 3단 JSON 객체 직렬화 포맷 적재 완비)
 function bindBlockModalEvents() {
   const confirmBtn = document.getElementById("modal-confirm-btn");
   const cancelBtn = document.getElementById("modal-cancel-btn");
-
   if (cancelBtn) cancelBtn.addEventListener("click", closeBlockModal);
   if (confirmBtn) {
     confirmBtn.addEventListener("click", () => {
@@ -773,9 +895,7 @@ function bindBlockModalEvents() {
         !chrome.runtime ||
         !chrome.runtime.id
       ) {
-        alert(
-          "📢 확장프로그램이 업데이트되었습니다!\n정상적인 차단 등록을 위해 페이지 새로고침(F5)을 진행합니다.",
-        );
+        alert("📢 데이터 통신 연결이 해제되어 페이지를 다시 로드합니다.");
         window.location.reload();
         return;
       }
@@ -786,18 +906,24 @@ function bindBlockModalEvents() {
 
       const reasonInput = document.getElementById("ext-block-reason-input");
       const blockReason = reasonInput ? reasonInput.value.trim() : "";
-      const blockStorageValue = `${targetMemberIdToBlock}:${targetNicknameToBlock}:${blockReason}`;
 
-      chrome.storage.local.get(["nicknames"], (result) => {
+      // 📦 유저님이 확립하신 { date, member_num, memo } 구조체 포맷 그대로 마스터 패키징
+      const newBlockUserObj = {
+        date: "2026/05/19",
+        member_num: String(targetMemberIdToBlock).trim(),
+        memo: blockReason,
+      };
+
+      chrome.storage.local.get(["blocked_users"], (result) => {
         if (chrome.runtime?.lastError) return;
-        const list = result.nicknames || [];
-        const isAlreadyExist = list.some((item) =>
-          item.startsWith(`${targetMemberIdToBlock}:`),
+        const list = result.blocked_users || [];
+        const isAlreadyExist = list.some(
+          (item) => String(item.member_num) === String(targetMemberIdToBlock),
         );
 
         if (!isAlreadyExist) {
-          list.push(blockStorageValue);
-          chrome.storage.local.set({ nicknames: list }, () => {
+          list.push(newBlockUserObj);
+          chrome.storage.local.set({ blocked_users: list }, () => {
             closeBlockModal();
             window.location.reload();
           });
@@ -809,13 +935,10 @@ function bindBlockModalEvents() {
   }
 }
 
-// 유저 전역 모달 팝업 제어반
 function openUserMemoModal(nickname, memberId, rawMemoData) {
   targetMemoMemberId = memberId;
-
   let currentMemoText = "";
   selectedMemoColorStyle = "blue";
-
   if (rawMemoData) {
     if (rawMemoData.includes(":")) {
       const parts = rawMemoData.split(":");
@@ -825,22 +948,18 @@ function openUserMemoModal(nickname, memberId, rawMemoData) {
       currentMemoText = rawMemoData;
     }
   }
-
   const titleEl = document.getElementById("ext-memo-modal-title");
   const inputEl = document.getElementById("ext-user-memo-modal-input");
   const deleteBtn = document.getElementById("memo-modal-delete-btn");
-
   if (titleEl)
     titleEl.innerHTML = `📝 <strong>${nickname}</strong> 유저 메모 관리`;
   if (inputEl) {
     inputEl.value = currentMemoText;
     setTimeout(() => inputEl.focus(), 50);
   }
-
   if (deleteBtn) {
     deleteBtn.style.display = currentMemoText !== "" ? "block" : "none";
   }
-
   renderMemoColorPickerUI();
   memoModal.style.display = "flex";
 }
@@ -856,7 +975,6 @@ function renderMemoColorPickerUI() {
   const pickerContainer = document.getElementById("ext-memo-color-picker");
   if (!pickerContainer) return;
   pickerContainer.innerHTML = "";
-
   const colorPalette = [
     { key: "blue", hex: "#3b82f6", name: "블루" },
     { key: "green", hex: "#10b981", name: "그린" },
@@ -869,19 +987,16 @@ function renderMemoColorPickerUI() {
     { key: "teal", hex: "#14b8a6", name: "티일" },
     { key: "gray", hex: "#64748b", name: "그레이" },
   ];
-
   colorPalette.forEach((color) => {
     const chip = document.createElement("div");
     chip.className = `ext-memo-color-chip-item ${color.key}`;
     chip.style.cssText = `width: 22px; height: 22px; border-radius: 50%; background-color: ${color.hex}; cursor: pointer; box-sizing: border-box; transition: all 0.15s ease; border: 2px solid transparent;`;
     chip.title = color.name;
-
     if (selectedMemoColorStyle === color.key) {
       chip.style.borderColor = "#111827";
       chip.style.transform = "scale(1.15)";
       chip.style.boxShadow = "0 2px 6px rgba(0,0,0,0.15)";
     }
-
     chip.addEventListener("click", () => {
       selectedMemoColorStyle = color.key;
       pickerContainer
@@ -895,7 +1010,6 @@ function renderMemoColorPickerUI() {
       chip.style.transform = "scale(1.15)";
       chip.style.boxShadow = "0 2px 6px rgba(0,0,0,0.15)";
     });
-
     pickerContainer.appendChild(chip);
   });
 }
@@ -905,7 +1019,6 @@ function bindMemoModalEvents() {
   const cancelBtn = document.getElementById("memo-modal-cancel-btn");
   const deleteBtn = document.getElementById("memo-modal-delete-btn");
   const inputEl = document.getElementById("ext-user-memo-modal-input");
-
   cancelBtn.addEventListener("click", closeUserMemoModal);
   inputEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
@@ -913,7 +1026,6 @@ function bindMemoModalEvents() {
       confirmBtn.click();
     }
   });
-
   deleteBtn.addEventListener("click", () => {
     if (
       typeof chrome === "undefined" ||
@@ -927,18 +1039,15 @@ function bindMemoModalEvents() {
       closeUserMemoModal();
       return;
     }
-
     chrome.storage.local.get(["userMemos"], (res) => {
       const currentMemos = res.userMemos || {};
       delete currentMemos[targetMemoMemberId];
-
       chrome.storage.local.set({ userMemos: currentMemos }, () => {
         closeUserMemoModal();
         window.location.reload();
       });
     });
   });
-
   confirmBtn.addEventListener("click", () => {
     if (
       typeof chrome === "undefined" ||
@@ -952,9 +1061,7 @@ function bindMemoModalEvents() {
       closeUserMemoModal();
       return;
     }
-
     const memoText = inputEl.value.trim();
-
     chrome.storage.local.get(["userMemos"], (res) => {
       const currentMemos = res.userMemos || {};
       if (memoText === "") {
@@ -963,7 +1070,6 @@ function bindMemoModalEvents() {
         currentMemos[targetMemoMemberId] =
           `${memoText}:${selectedMemoColorStyle}`;
       }
-
       chrome.storage.local.set({ userMemos: currentMemos }, () => {
         closeUserMemoModal();
         window.location.reload();
@@ -976,13 +1082,14 @@ function handlePopupMenuDetected(popupElement) {
   const currentDisplay = window.getComputedStyle(popupElement).display;
   if (currentDisplay === "none") return;
   if (lastClickedUserData.memberId) {
-    chrome.storage.local.get(["nicknames", "userMemos"], (result) => {
+    chrome.storage.local.get(["blocked_users", "userMemos"], (result) => {
       if (chrome.runtime?.lastError || !chrome.runtime || !chrome.runtime.id)
         return;
-      const list = result.nicknames || [];
+      const list = result.blocked_users || [];
       const memos = result.userMemos || {};
-      const isAlreadyBlocked = list.some((item) =>
-        item.startsWith(`${lastClickedUserData.memberId}:`),
+      const isAlreadyBlocked = list.some(
+        (item) =>
+          String(item.member_num) === String(lastClickedUserData.memberId),
       );
       const currentMemoData = memos[lastClickedUserData.memberId] || "";
       insertMemberMenu(
@@ -1005,20 +1112,14 @@ function insertMemberMenu(
   if (!popupMenuParentEl) return;
   const popupMenuEl = popupMenuParentEl.querySelector("ul");
   if (!popupMenuEl) return;
-
   popupMenuEl
     .querySelectorAll(
       ".ext-inserted-member-block, .ext-inserted-member-memo-link",
     )
     .forEach((el) => el.remove());
-
-  let pureMemoText = "";
-  if (currentMemoData) {
-    pureMemoText = currentMemoData.includes(":")
-      ? currentMemoData.split(":")[0]
-      : currentMemoData;
-  }
-
+  let pureMemoText = currentMemoData.includes(":")
+    ? currentMemoData.split(":")[0]
+    : currentMemoData;
   const memoLi = document.createElement("li");
   memoLi.className = "ext-inserted-member-memo-link";
   const memoSuffix =
@@ -1032,7 +1133,6 @@ function insertMemberMenu(
     popupMenuParentEl.style.display = "none";
     openUserMemoModal(nickname, memberId, currentMemoData);
   });
-
   const blockItem = document.createElement("li");
   blockItem.className = "ext-inserted-member-block";
   if (isAlreadyBlocked) {
@@ -1041,13 +1141,13 @@ function insertMemberMenu(
       e.preventDefault();
       e.stopPropagation();
       popupMenuParentEl.style.display = "none";
-      chrome.storage.local.get(["nicknames"], (res) => {
+      chrome.storage.local.get(["blocked_users"], (res) => {
         if (chrome.runtime?.lastError) return;
-        let currentList = res.nicknames || [];
+        let currentList = res.blocked_users || [];
         currentList = currentList.filter(
-          (item) => !item.startsWith(`${memberId}:`),
+          (item) => String(item.member_num) !== String(memberId),
         );
-        chrome.storage.local.set({ nicknames: currentList }, () => {
+        chrome.storage.local.set({ blocked_users: currentList }, () => {
           window.location.reload();
         });
       });
@@ -1133,7 +1233,6 @@ if (
 } else {
   document.addEventListener("DOMContentLoaded", executeFilterWithMinTime);
 }
-
 window.addEventListener("load", () => {
   if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.id) {
     removeLoadingOverlay();
@@ -1144,6 +1243,33 @@ window.addEventListener("load", () => {
       setTimeout(() => {
         overlay.remove();
       }, 200);
+    }
+  }
+});
+
+// ⌨️ 전역 키보드 이벤트 리스너: ESC 누르면 활성화된 모달 닫기
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" || e.key === "Esc") {
+    // 1. 차단 모달이 열려 있으면 닫기
+    const blockModal = document.getElementById("ext-block-modal");
+    if (blockModal && blockModal.style.display === "flex") {
+      if (typeof closeBlockModal === "function") {
+        closeBlockModal();
+      } else {
+        blockModal.style.display = "none";
+      }
+    }
+
+    // 2. 유저 메모 모달이 열려 있으면 닫기
+    const memoModal =
+      document.getElementById("ext-ext-memo-modal") ||
+      document.getElementById("ext-memo-modal");
+    if (memoModal && memoModal.style.display === "flex") {
+      if (typeof closeUserMemoModal === "function") {
+        closeUserMemoModal();
+      } else {
+        memoModal.style.display = "none";
+      }
     }
   }
 });

@@ -341,22 +341,46 @@ function refreshActiveTab() {
   });
 }
 
-/* ================= 🚫 퀵 차단 데이터 스토리지 적재기 ================= */
+/* ================= 🚫 [NEW 코어] 퀵 패널 전용 조건형 키워드 적재기 ================= */
 function addListItem(key, inputId) {
   const inputEl = document.getElementById(inputId);
-  if (!inputEl) return;
+  const methodEl = document.getElementById("ext-quick-keyword-method");
+  const targetEl = document.getElementById("ext-quick-keyword-target");
+
+  if (!inputEl || !methodEl || !targetEl) return;
 
   const value = inputEl.value.trim();
   if (!value) return;
 
   chrome.storage.local.get([key], (result) => {
+    if (chrome.runtime?.lastError) return;
     const list = result[key] || [];
-    if (!list.includes(value)) {
-      list.push(value);
+
+    // 🛡️ 중복 등록 방어선 가드: 이미 등록된 단어인지 확인 (객체 구조 분해 호환 검사)
+    const isAlreadyExist = list.some((kw) => {
+      const checkWord =
+        typeof kw === "string" ? kw : kw.word || kw.keyword || "";
+      return checkWord.toLowerCase() === value.toLowerCase();
+    });
+
+    if (!isAlreadyExist) {
+      // 📦 빠른 차단창에서 고른 콤보박스 설정값과 함께 마스터 규격 문자열 구조체 생성
+      const newQuickKeywordObj = {
+        date: "2026/05/19",
+        method: methodEl.value, // includes, starts
+        target: targetEl.value, // all, comments, posts
+        word: value,
+      };
+
+      list.push(newQuickKeywordObj);
+
       chrome.storage.local.set({ [key]: list }, () => {
         inputEl.value = "";
-        refreshActiveTab();
+        refreshActiveTab(); // 내가 지금 보고 있는 개드립 본섭 탭 실시간 새로고침
       });
+    } else {
+      alert(`⚠️ '${value}' 항목은 이미 차단 목록에 존재합니다.`);
+      inputEl.value = "";
     }
   });
 }

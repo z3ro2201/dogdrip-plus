@@ -123,11 +123,48 @@
 
     <div class="ui-card">
       <h3>🚫 빠른 키워드 차단</h3>
+
+      <div style="display: flex; gap: 4px; margin-bottom: 8px">
+        <select
+          id="ext-quick-keyword-method"
+          style="
+            flex: 1;
+            padding: 6px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 12px;
+            background: #fff;
+            cursor: pointer;
+          "
+        >
+          <option value="includes">포함할 때</option>
+          <option value="starts">시작할 때</option>
+        </select>
+
+        <select
+          id="ext-quick-keyword-target"
+          style="
+            flex: 1;
+            padding: 6px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 12px;
+            background: #fff;
+            cursor: pointer;
+          "
+        >
+          <option value="all">전체 구역</option>
+          <option value="comments">댓글만</option>
+          <option value="posts">제목만</option>
+        </select>
+      </div>
+
       <div class="input-group">
         <input
           type="text"
           id="keyword-input"
           placeholder="차단할 키워드 입력"
+          style="font-size: 13px"
         />
         <button id="add-keyword-btn" class="ui-button ui-button-dark">
           추가
