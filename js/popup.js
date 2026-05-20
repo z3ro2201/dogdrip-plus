@@ -6,6 +6,11 @@ var COOKIE_URL = "https://www.dogdrip.net";
 var TXT_COOKIE_NAME = "txtmode";
 var THEME_COOKIE_NAME = "theme";
 
+function getTodayDateStr() {
+  const d = new Date();
+  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
+}
+
 // 1. 팝업창 오픈 시 설정 데이터 로드 및 UI 복원
 document.addEventListener("DOMContentLoaded", () => {
   // 공용 버전 체크 모듈 엔진 기동
@@ -49,6 +54,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const method = result.blockMethod || "remove";
       if (method === "blind") {
         document.getElementById("block-method-blind").checked = true;
+      } else if (method === "badge") {
+        document.getElementById("block-method-badge").checked = true;
       } else {
         document.getElementById("block-method-remove").checked = true;
       }
@@ -369,9 +376,9 @@ function addListItem(key, inputId) {
     if (!isAlreadyExist) {
       // 📦 빠른 차단창에서 고른 콤보박스 설정값과 함께 마스터 규격 문자열 구조체 생성
       const newQuickKeywordObj = {
-        date: "2026/05/19",
-        method: methodEl.value, // includes, starts
-        target: targetEl.value, // all, comments, posts
+        date: getTodayDateStr(),
+        method: methodEl.value,
+        target: targetEl.value,
         word: value,
       };
 

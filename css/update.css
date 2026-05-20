@@ -1,0 +1,98 @@
+.version-badge {
+  display: inline-block;
+  background: #0284c7;
+  color: #fff;
+  font-size: 13px;
+  font-weight: bold;
+  padding: 3px 10px;
+  border-radius: 20px;
+  margin-left: 8px;
+  vertical-align: middle;
+}
+.subtitle {
+  color: #64748b;
+  font-size: 14px;
+  margin-top: 4px;
+}
+.section-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 18px 0 6px 0;
+}
+.change-item {
+  font-size: 14px;
+  color: #334155;
+  line-height: 1.7;
+  margin: 3px 0;
+  padding-left: 4px;
+}
+.tag {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 1px 7px;
+  border-radius: 4px;
+  margin-right: 5px;
+  vertical-align: middle;
+}
+.tag-added {
+  background: #dcfce7;
+  color: #15803d;
+}
+.tag-fixed {
+  background: #fef9c3;
+  color: #854d0e;
+}
+.tag-changed {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+.tag-removed {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+.divider {
+  border: none;
+  border-top: 1px solid #e2e8f0;
+  margin: 20px 0;
+}
+.btn-row {
+  margin-top: 24px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+.btn {
+  padding: 9px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: bold;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+}
+.btn-primary {
+  background: #0284c7;
+  color: #fff;
+}
+.btn-secondary {
+  background: #f1f5f9;
+  color: #475569;
+}
+.loading {
+  color: #94a3b8;
+  font-size: 14px;
+  margin-top: 12px;
+}
+.error {
+  color: #ef4444;
+  font-size: 13px;
+  margin-top: 12px;
+}
+#notes-container {
+  text-align: left;
+  margin-top: 8px;
+}

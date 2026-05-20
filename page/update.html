@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <title>개드립 Plus + - 업데이트 완료</title>
+    <link rel="stylesheet" href="/css/welcome.css" />
+    <link rel="stylesheet" href="/css/update.css" />
+  </head>
+  <body>
+    <div class="card">
+      <h1>
+        🎉 업데이트 완료!
+        <span class="version-badge" id="version-badge">v?.?.?</span>
+      </h1>
+      <p id="subtitle" class="subtitle"></p>
+
+      <hr class="divider" />
+
+      <div id="notes-container">
+        <p class="loading">업데이트 노트를 불러오는 중...</p>
+      </div>
+
+      <div class="btn-row">
+        <a href="/page/options.html" class="btn btn-secondary" target="_blank"
+          >⚙️ 상세 설정</a
+        >
+        <button class="btn btn-primary" id="close-btn">확인</button>
+      </div>
+    </div>
+    <script src="/js/update.js"></script>
+  </body>
+</html>

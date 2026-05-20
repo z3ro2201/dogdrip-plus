@@ -6,6 +6,11 @@ const blockColor = "f43f5e";
 const grantColor = "16a34a";
 const targetPopupMenuId = "popup_menu_area";
 
+function getTodayDateStr() {
+  const d = new Date();
+  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
+}
+
 // 1. 가림막, 모달, 개드립콘 컨텍스트 메뉴 구조 준비
 const loadingOverlay = document.createElement("div");
 loadingOverlay.id = "ext-loading-overlay";
@@ -236,11 +241,20 @@ function executeFilterWithMinTime() {
         const blockedDogconGroups = result.blockedDogconGroups || [];
         const isBlindMode = result.blockMethod === "blind";
         const isBadgeMode = result.blockMethod === "badge";
-        const memos = result.userMemos || {};
+
+        // userMemos: 신버전 array → member_num 기준 Map으로 색인
+        const rawMemos = Array.isArray(result.userMemos)
+          ? result.userMemos
+          : [];
+        const memoMap = new Map(rawMemos.map((m) => [String(m.member_num), m]));
 
         const blockedMemberIds = blockedUsers
           .map((u) => String(u.member_num).trim())
           .filter((id) => id !== "");
+        // blockedUsers도 Map으로 색인 → find() 이중 조회 제거
+        const blockedUserMap = new Map(
+          blockedUsers.map((u) => [String(u.member_num).trim(), u]),
+        );
 
         const blockedDogconIds = blockedDogcons.map((item) => item.id);
         const blockedDogconGroupIds = blockedDogconGroups.map(
@@ -268,13 +282,9 @@ function executeFilterWithMinTime() {
         }
 
         function getMemoData(mid) {
-          const rawData = memos[mid];
-          if (!rawData) return { text: "", style: "blue" };
-          if (rawData.includes(":")) {
-            const parts = rawData.split(":");
-            return { text: parts[0], style: parts[1] };
-          }
-          return { text: rawData, style: "blue" };
+          const entry = memoMap.get(String(mid));
+          if (!entry) return { text: "", color: "blue" };
+          return { text: entry.memo || "", color: entry.color || "blue" };
         }
 
         // ① 웹진형 레이아웃 필터 (타겟: posts) 💡 [다중 글 독립 배지 마감 완료]
@@ -311,28 +321,27 @@ function executeFilterWithMinTime() {
           }
 
           if (shouldBlind) {
-            if (
-              currentMemberId &&
-              nicknameElement &&
-              !article.querySelector(`.ext-badge-id-${currentMemberId}`)
-            ) {
-              const userObj = blockedUsers.find(
-                (u) => String(u.member_num) === String(currentMemberId),
-              );
-              if (userObj && userObj.memo && userObj.memo.trim() !== "") {
+            if (isBadgeMode) {
+              if (
+                currentMemberId &&
+                nicknameElement &&
+                !article.querySelector(`.ext-badge-id-${currentMemberId}`)
+              ) {
+                const userObj = blockedUserMap.get(currentMemberId);
+                const badgeLabel =
+                  userObj && userObj.memo && userObj.memo.trim() !== ""
+                    ? userObj.memo.trim()
+                    : "차단됨";
                 const blockBadge = createMemoBadgeElement(
                   currentMemberId,
-                  userObj.memo.trim(),
+                  badgeLabel,
                   "red-solid",
                 );
                 if (blockBadge) nicknameElement.after(blockBadge);
               }
-            }
-
-            if (isBadgeMode) {
               article.style.backgroundColor = "#fff1f2";
               article.classList.add("ext-blocked-user-layout");
-              return; // 가드를 패스하므로 다중 노출 카드 전부 동시 바인딩 성공
+              return;
             }
 
             if (article.dataset.extFiltered) return;
@@ -345,7 +354,7 @@ function executeFilterWithMinTime() {
             } else {
               article.remove();
             }
-          } else if (currentMemberId && memos[currentMemberId]) {
+          } else if (currentMemberId && memoMap.has(currentMemberId)) {
             if (
               nicknameElement &&
               !article.querySelector(`.ext-badge-id-${currentMemberId}`)
@@ -354,7 +363,7 @@ function executeFilterWithMinTime() {
               const badge = createMemoBadgeElement(
                 currentMemberId,
                 memoData.text,
-                memoData.style,
+                memoData.color,
               );
               if (badge) nicknameElement.after(badge);
             }
@@ -390,24 +399,23 @@ function executeFilterWithMinTime() {
             }
 
             if (currentMemberId && blockedMemberIds.includes(currentMemberId)) {
-              if (
-                nicknameElement &&
-                !parentLi.querySelector(`.ext-badge-id-${currentMemberId}`)
-              ) {
-                const userObj = blockedUsers.find(
-                  (u) => String(u.member_num) === String(currentMemberId),
-                );
-                if (userObj && userObj.memo && userObj.memo.trim() !== "") {
+              if (isBadgeMode) {
+                if (
+                  nicknameElement &&
+                  !parentLi.querySelector(`.ext-badge-id-${currentMemberId}`)
+                ) {
+                  const userObj = blockedUserMap.get(currentMemberId);
+                  const badgeLabel =
+                    userObj && userObj.memo && userObj.memo.trim() !== ""
+                      ? userObj.memo.trim()
+                      : "차단됨";
                   const blockBadge = createMemoBadgeElement(
                     currentMemberId,
-                    userObj.memo.trim(),
+                    badgeLabel,
                     "red-solid",
                   );
                   if (blockBadge) nicknameElement.after(blockBadge);
                 }
-              }
-
-              if (isBadgeMode) {
                 parentLi.style.backgroundColor = "#fff1f2";
                 parentLi.classList.add("ext-blocked-user-layout");
                 return;
@@ -423,7 +431,7 @@ function executeFilterWithMinTime() {
               } else {
                 parentLi.remove();
               }
-            } else if (currentMemberId && memos[currentMemberId]) {
+            } else if (currentMemberId && memoMap.has(currentMemberId)) {
               if (
                 nicknameElement &&
                 !parentLi.querySelector(`.ext-badge-id-${currentMemberId}`)
@@ -432,7 +440,7 @@ function executeFilterWithMinTime() {
                 const badge = createMemoBadgeElement(
                   currentMemberId,
                   memoData.text,
-                  memoData.style,
+                  memoData.color,
                 );
                 if (badge) nicknameElement.after(badge);
               }
@@ -499,41 +507,41 @@ function executeFilterWithMinTime() {
           }
 
           if (shouldBlind) {
-            if (
-              currentMemberId &&
-              authorElement &&
-              !row.querySelector(`.ext-badge-id-${currentMemberId}`)
-            ) {
-              const userObj = blockedUsers.find(
-                (u) => String(u.member_num) === String(currentMemberId),
-              );
-              if (userObj && userObj.memo && userObj.memo.trim() !== "") {
+            if (isBadgeMode) {
+              if (
+                currentMemberId &&
+                authorElement &&
+                !row.querySelector(`.ext-badge-id-${currentMemberId}`)
+              ) {
+                const userObj = blockedUserMap.get(currentMemberId);
+                const badgeLabel =
+                  userObj && userObj.memo && userObj.memo.trim() !== ""
+                    ? userObj.memo.trim()
+                    : "차단됨";
                 const blockBadge = createMemoBadgeElement(
                   currentMemberId,
-                  userObj.memo.trim(),
+                  badgeLabel,
                   "red-solid",
                 );
                 if (blockBadge) authorElement.after(blockBadge);
               }
-            }
-
-            if (isBadgeMode) {
               row.style.backgroundColor = "#fff1f2";
               row.classList.add("ext-blocked-user-layout");
-              return; // 🎯 가드 전 즉시 리턴하므로 동일 유저의 모든 tr 행 염색 대성공
+              return;
             }
 
             if (row.dataset.extFiltered) return;
             row.dataset.extFiltered = "true";
 
             if (isBlindMode) {
+              const colCount = row.querySelectorAll("td, th").length || 6;
               const cacheHTML = row.innerHTML;
-              row.innerHTML = `<td colspan="6" style="padding: 0;">${buildBlindWrapperHTML("게시글", `<table><tr>${cacheHTML}</tr></table>`)}</td>`;
+              row.innerHTML = `<td colspan="${colCount}" style="padding: 0;">${buildBlindWrapperHTML("게시글", `<table style="width:100%"><tbody><tr>${cacheHTML}</tr></tbody></table>`)}</td>`;
               attachBlindToggleEvents(row);
             } else {
               row.remove();
             }
-          } else if (currentMemberId && memos[currentMemberId]) {
+          } else if (currentMemberId && memoMap.has(currentMemberId)) {
             if (
               authorElement &&
               !row.querySelector(`.ext-badge-id-${currentMemberId}`)
@@ -542,7 +550,7 @@ function executeFilterWithMinTime() {
               const badge = createMemoBadgeElement(
                 currentMemberId,
                 memoData.text,
-                memoData.style,
+                memoData.color,
               );
               if (badge) authorElement.after(badge);
             }
@@ -608,25 +616,31 @@ function executeFilterWithMinTime() {
             blockedMemberIds.length > 0 &&
             blockedMemberIds.includes(currentMemberId)
           ) {
-            if (
-              nicknameElement &&
-              !comment.querySelector(`.ext-badge-id-${currentMemberId}`)
-            ) {
-              const userObj = blockedUsers.find(
-                (u) => String(u.member_num) === String(currentMemberId),
-              );
-              if (userObj && userObj.memo && userObj.memo.trim() !== "") {
+            const totalCommentTarget =
+              comment.closest("li, div.comment-item") || comment;
+
+            if (isBadgeMode) {
+              if (
+                nicknameElement &&
+                !comment.querySelector(`.ext-badge-id-${currentMemberId}`)
+              ) {
+                const userObj = blockedUserMap.get(currentMemberId);
+                const badgeLabel =
+                  userObj && userObj.memo && userObj.memo.trim() !== ""
+                    ? userObj.memo.trim()
+                    : "차단됨";
                 const blockBadge = createMemoBadgeElement(
                   currentMemberId,
-                  userObj.memo.trim(),
+                  badgeLabel,
                   "red-solid",
                 );
                 if (blockBadge) nicknameElement.after(blockBadge);
               }
+              totalCommentTarget.style.backgroundColor = "#fff1f2";
+              totalCommentTarget.classList.add("ext-blocked-user-layout");
+              return;
             }
 
-            const totalCommentTarget =
-              comment.closest("li, div.comment-item") || comment;
             if (totalCommentTarget.dataset.extFiltered) return;
             totalCommentTarget.dataset.extFiltered = "true";
 
@@ -637,16 +651,17 @@ function executeFilterWithMinTime() {
                 cacheHTML,
               );
               attachBlindToggleEvents(totalCommentTarget);
-            } else if (isBadgeMode) {
-              totalCommentTarget.style.backgroundColor = "#fff1f2";
-              totalCommentTarget.classList.add("ext-blocked-user-layout");
             } else {
               totalCommentTarget.remove();
             }
             return;
           }
 
-          if (nicknameElement && currentMemberId && memos[currentMemberId]) {
+          if (
+            nicknameElement &&
+            currentMemberId &&
+            memoMap.has(currentMemberId)
+          ) {
             if (
               nicknameElement &&
               !comment.querySelector(`.ext-badge-id-${currentMemberId}`)
@@ -655,7 +670,7 @@ function executeFilterWithMinTime() {
               const badge = createMemoBadgeElement(
                 currentMemberId,
                 memoData.text,
-                memoData.style,
+                memoData.color,
               );
               if (badge) nicknameElement.after(badge);
             }
@@ -692,7 +707,7 @@ function executeFilterWithMinTime() {
               authorElement.className.match(/member_(\d+)/)?.[1];
             if (authorMemberId) {
               if (
-                memos[authorMemberId] &&
+                memoMap.has(authorMemberId) &&
                 !authorElement.nextElementSibling?.classList.contains(
                   "ext-user-memo-badge",
                 )
@@ -701,7 +716,7 @@ function executeFilterWithMinTime() {
                 const badge = createMemoBadgeElement(
                   authorMemberId,
                   memoData.text,
-                  memoData.style,
+                  memoData.color,
                 );
                 if (badge) authorElement.after(badge);
               }
@@ -752,6 +767,13 @@ function executeFilterWithMinTime() {
             }
           }
         }
+
+        // ⑧ 첨부파일 전체 다운로드 버튼
+        document
+          .querySelectorAll(".ed.dropdown .ed.dropdown-menu")
+          .forEach((menu) => {
+            injectDownloadAllButton(menu);
+          });
 
         // ⑦ 개드립콘 처리 구역 등 하단 레거시 로직 보존 집행
         const dogconImgs = document.querySelectorAll(
@@ -879,6 +901,59 @@ function executeFilterWithMinTime() {
   Promise.all([minTimePromise, filterPromise]).then(() => {
     removeLoadingOverlay();
   });
+}
+
+// 5. 첨부파일 전체 다운로드 버튼 주입
+function injectDownloadAllButton(menu) {
+  if (!menu || menu.querySelector(".ext-dl-all-btn")) return;
+
+  const links = Array.from(
+    menu.querySelectorAll("li a[href*='procFileDownload']"),
+  );
+  if (links.length < 2) return;
+
+  const INTERVAL_MS = 300;
+
+  const btnLi = document.createElement("li");
+  btnLi.style.cssText =
+    "border-bottom: 1px solid #e2e8f0; margin-bottom: 4px; padding-bottom: 4px;";
+
+  const btn = document.createElement("a");
+  btn.className = "ext-dl-all-btn";
+  btn.href = "#";
+  btn.innerHTML = `<i class="fas fa-download"></i> <span>전체 다운로드 (${links.length}개)</span>`;
+
+  btn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const span = btn.querySelector("span");
+    span.textContent = `다운로드 중... (${links.length}개)`;
+    btn.style.color = "#64748b";
+
+    links.forEach((link, i) => {
+      setTimeout(() => {
+        const a = document.createElement("a");
+        a.href = link.href;
+        a.download = "";
+        a.style.display = "none";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+      }, i * INTERVAL_MS);
+    });
+
+    setTimeout(
+      () => {
+        span.textContent = `전체 다운로드 (${links.length}개)`;
+        btn.style.color = "#0284c7";
+      },
+      links.length * INTERVAL_MS + 500,
+    );
+  });
+
+  btnLi.appendChild(btn);
+  menu.insertBefore(btnLi, menu.firstChild);
 }
 
 // 4. 개드립콘 컨텍스트 메뉴 제어
@@ -1024,7 +1099,7 @@ function bindBlockModalEvents() {
       const blockReason = reasonInput ? reasonInput.value.trim() : "";
 
       const newBlockUserObj = {
-        date: "2026/05/19",
+        date: getTodayDateStr(),
         member_num: String(targetMemberIdToBlock).trim(),
         memo: blockReason,
       };
@@ -1050,19 +1125,11 @@ function bindBlockModalEvents() {
   }
 }
 
-function openUserMemoModal(nickname, memberId, rawMemoData) {
+function openUserMemoModal(nickname, memberId, memoEntry) {
   targetMemoMemberId = memberId;
-  let currentMemoText = "";
-  selectedMemoColorStyle = "blue";
-  if (rawMemoData) {
-    if (rawMemoData.includes(":")) {
-      const parts = rawMemoData.split(":");
-      currentMemoText = parts[0];
-      selectedMemoColorStyle = parts[1] || "blue";
-    } else {
-      currentMemoText = rawMemoData;
-    }
-  }
+  const currentMemoText = memoEntry?.memo || "";
+  selectedMemoColorStyle = memoEntry?.color || "blue";
+
   const titleEl = document.getElementById("ext-memo-modal-title");
   const inputEl = document.getElementById("ext-user-memo-modal-input");
   const deleteBtn = document.getElementById("memo-modal-delete-btn");
@@ -1134,6 +1201,7 @@ function bindMemoModalEvents() {
   const cancelBtn = document.getElementById("memo-modal-cancel-btn");
   const deleteBtn = document.getElementById("memo-modal-delete-btn");
   const inputEl = document.getElementById("ext-user-memo-modal-input");
+  if (!confirmBtn || !cancelBtn || !deleteBtn || !inputEl) return;
   cancelBtn.addEventListener("click", closeUserMemoModal);
   inputEl.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
@@ -1155,9 +1223,11 @@ function bindMemoModalEvents() {
       return;
     }
     chrome.storage.local.get(["userMemos"], (res) => {
-      const currentMemos = res.userMemos || {};
-      delete currentMemos[targetMemoMemberId];
-      chrome.storage.local.set({ userMemos: currentMemos }, () => {
+      const arr = Array.isArray(res.userMemos) ? res.userMemos : [];
+      const updated = arr.filter(
+        (m) => String(m.member_num) !== String(targetMemoMemberId),
+      );
+      chrome.storage.local.set({ userMemos: updated }, () => {
         closeUserMemoModal();
         window.location.reload();
       });
@@ -1178,14 +1248,19 @@ function bindMemoModalEvents() {
     }
     const memoText = inputEl.value.trim();
     chrome.storage.local.get(["userMemos"], (res) => {
-      const currentMemos = res.userMemos || {};
-      if (memoText === "") {
-        delete currentMemos[targetMemoMemberId];
-      } else {
-        currentMemos[targetMemoMemberId] =
-          `${memoText}:${selectedMemoColorStyle}`;
+      const arr = Array.isArray(res.userMemos) ? res.userMemos : [];
+      const filtered = arr.filter(
+        (m) => String(m.member_num) !== String(targetMemoMemberId),
+      );
+      if (memoText !== "") {
+        filtered.push({
+          member_num: String(targetMemoMemberId),
+          memo: memoText,
+          date: getTodayDateStr(),
+          color: selectedMemoColorStyle,
+        });
       }
-      chrome.storage.local.set({ userMemos: currentMemos }, () => {
+      chrome.storage.local.set({ userMemos: filtered }, () => {
         closeUserMemoModal();
         window.location.reload();
       });
@@ -1201,28 +1276,26 @@ function handlePopupMenuDetected(popupElement) {
       if (chrome.runtime?.lastError || !chrome.runtime || !chrome.runtime.id)
         return;
       const list = result.blocked_users || [];
-      const memos = result.userMemos || {};
+      const memosArr = Array.isArray(result.userMemos) ? result.userMemos : [];
       const isAlreadyBlocked = list.some(
         (item) =>
           String(item.member_num) === String(lastClickedUserData.memberId),
       );
-      const currentMemoData = memos[lastClickedUserData.memberId] || "";
+      const memoEntry =
+        memosArr.find(
+          (m) => String(m.member_num) === String(lastClickedUserData.memberId),
+        ) || null;
       insertMemberMenu(
         lastClickedUserData.memberId,
         lastClickedUserData.nickname,
         isAlreadyBlocked,
-        currentMemoData,
+        memoEntry,
       );
     });
   }
 }
 
-function insertMemberMenu(
-  memberId,
-  nickname,
-  isAlreadyBlocked,
-  currentMemoData,
-) {
+function insertMemberMenu(memberId, nickname, isAlreadyBlocked, memoEntry) {
   const popupMenuParentEl = document.getElementById("popup_menu_area");
   if (!popupMenuParentEl) return;
   const popupMenuEl = popupMenuParentEl.querySelector("ul");
@@ -1232,9 +1305,7 @@ function insertMemberMenu(
       ".ext-inserted-member-block, .ext-inserted-member-memo-link",
     )
     .forEach((el) => el.remove());
-  let pureMemoText = currentMemoData.includes(":")
-    ? currentMemoData.split(":")[0]
-    : currentMemoData;
+  const pureMemoText = memoEntry?.memo || "";
   const memoLi = document.createElement("li");
   memoLi.className = "ext-inserted-member-memo-link";
   const memoSuffix =
@@ -1246,7 +1317,7 @@ function insertMemberMenu(
     e.preventDefault();
     e.stopPropagation();
     popupMenuParentEl.style.display = "none";
-    openUserMemoModal(nickname, memberId, currentMemoData);
+    openUserMemoModal(nickname, memberId, memoEntry);
   });
   const blockItem = document.createElement("li");
   blockItem.className = "ext-inserted-member-block";
@@ -1307,6 +1378,13 @@ const popupObserver = new MutationObserver((mutationsList) => {
               }
             }, 50);
           }
+          // 첨부파일 드롭다운 동적 감지
+          const attachMenu = node.matches?.("ul.ed.dropdown-menu")
+            ? node
+            : node.querySelector?.("ul.ed.dropdown-menu");
+          if (attachMenu && !attachMenu.querySelector(".ext-dl-all-btn")) {
+            injectDownloadAllButton(attachMenu);
+          }
           if (node.id === targetPopupMenuId) {
             handlePopupMenuDetected(node);
           } else {
@@ -1340,13 +1418,25 @@ function startPopupObservation() {
     attributeFilter: ["style"],
   });
 }
+
+// 위젯 레이아웃 반응형 처리
+// 개드립 위젯 영역은 float 기반 고정 레이아웃이라
+// JS로 재배치 시 구조가 깨지므로 처리하지 않음
+function applyWidgetFlexLayout() {
+  // no-op
+}
+
 if (
   document.readyState === "interactive" ||
   document.readyState === "complete"
 ) {
   executeFilterWithMinTime();
+  applyWidgetFlexLayout();
 } else {
-  document.addEventListener("DOMContentLoaded", executeFilterWithMinTime);
+  document.addEventListener("DOMContentLoaded", () => {
+    executeFilterWithMinTime();
+    applyWidgetFlexLayout();
+  });
 }
 window.addEventListener("load", () => {
   if (typeof chrome !== "undefined" && chrome.runtime && chrome.runtime.id) {
