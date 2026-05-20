@@ -232,6 +232,8 @@ function executeFilterWithMinTime() {
         "contentWidth",
         "blockMethod",
         "userMemos",
+        "readabilityMode",
+        "legacyToolbar",
       ],
       (result) => {
         if (chrome.runtime?.lastError) return;
@@ -251,7 +253,6 @@ function executeFilterWithMinTime() {
         const blockedMemberIds = blockedUsers
           .map((u) => String(u.member_num).trim())
           .filter((id) => id !== "");
-        // blockedUsers도 Map으로 색인 → find() 이중 조회 제거
         const blockedUserMap = new Map(
           blockedUsers.map((u) => [String(u.member_num).trim(), u]),
         );
@@ -279,6 +280,12 @@ function executeFilterWithMinTime() {
             htmlEl.classList.add("ext-hide-compact");
           if (result.disableVote === true)
             htmlEl.classList.add("ext-hide-vote");
+          if (result.readabilityMode === true)
+            htmlEl.classList.add("ext-readability-mode");
+          else htmlEl.classList.remove("ext-readability-mode");
+          if (result.legacyToolbar === true)
+            htmlEl.classList.add("ext-legacy-toolbar");
+          else htmlEl.classList.remove("ext-legacy-toolbar");
         }
 
         function getMemoData(mid) {
@@ -339,7 +346,7 @@ function executeFilterWithMinTime() {
                 );
                 if (blockBadge) nicknameElement.after(blockBadge);
               }
-              article.style.backgroundColor = "#fff1f2";
+              // article.style.backgroundColor = "#fff1f2";
               article.classList.add("ext-blocked-user-layout");
               return;
             }
@@ -894,6 +901,9 @@ function executeFilterWithMinTime() {
           });
         }
 
+        // 링크 복사 버튼
+        injectCopyLinkButton();
+
         resolve();
       },
     );
@@ -901,6 +911,56 @@ function executeFilterWithMinTime() {
   Promise.all([minTimePromise, filterPromise]).then(() => {
     removeLoadingOverlay();
   });
+}
+
+// 6. 게시물 원본 링크 복사 버튼 주입
+function injectCopyLinkButton() {
+  document
+    .querySelectorAll(
+      ".ed.article-head.margin-bottom-large .ed.margin-xxsmall.text-default",
+    )
+    .forEach((container) => {
+      if (container.querySelector(".ext-copy-link-btn")) return;
+      if (!container.querySelector("i.fas.fa-link")) return;
+
+      const linkEl = container.querySelector("a[href]");
+      if (!linkEl) return;
+      const url = linkEl.href;
+
+      const btn = document.createElement("a");
+      btn.className = "ext-copy-link-btn";
+      btn.href = "#";
+      btn.textContent = "링크 복사";
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        navigator.clipboard
+          .writeText(url)
+          .then(() => {
+            btn.textContent = "복사됨 ✓";
+            setTimeout(() => {
+              btn.textContent = "링크 복사";
+            }, 1500);
+          })
+          .catch(() => {
+            // clipboard API 실패 시 fallback
+            const ta = document.createElement("textarea");
+            ta.value = url;
+            ta.style.position = "fixed";
+            ta.style.opacity = "0";
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand("copy");
+            document.body.removeChild(ta);
+            btn.textContent = "복사됨 ✓";
+            setTimeout(() => {
+              btn.textContent = "링크 복사";
+            }, 1500);
+          });
+      });
+
+      container.appendChild(btn);
+    });
 }
 
 // 5. 첨부파일 전체 다운로드 버튼 주입
@@ -1419,23 +1479,56 @@ function startPopupObservation() {
   });
 }
 
-// 위젯 레이아웃 반응형 처리
-// 개드립 위젯 영역은 float 기반 고정 레이아웃이라
-// JS로 재배치 시 구조가 깨지므로 처리하지 않음
-function applyWidgetFlexLayout() {
-  // no-op
+// 폰트 주입 팩토리: 확장프로그램 내부 CSS를 개드립 헤더에 꽂아 넣습니다.
+function injectPretendardFont() {
+  // 1. 첫 번째 폰트 ID를 기준으로 중복 삽입 완벽 방어
+  if (document.getElementById("ext-pretendard-static-font")) return;
+
+  const fontList = [
+    {
+      fontName: "pretendard-static",
+      url: "assets/fonts/Pretendard/web/static/pretendard.css",
+    },
+    {
+      fontName: "pretendard-variable",
+      url: "assets/fonts/Pretendard/web/variable/pretendardvariable.css",
+    },
+    {
+      fontName: "pretendardJP-static",
+      url: "assets/fonts/PretendardJP/web/static/pretendard-jp.css",
+    },
+    {
+      fontName: "pretendardJP-variable",
+      url: "assets/fonts/PretendardJP/web/variable/pretendardvariable-jp.css",
+    },
+  ];
+
+  // 2. head가 아직 생성 전이더라도 html(documentElement) 최상단에 강제 주입
+  const targetNode = document.head || document.documentElement;
+
+  fontList.forEach((item) => {
+    const fontLink = document.createElement("link");
+    fontLink.id = `ext-${item.fontName}-font`;
+    fontLink.rel = "stylesheet";
+
+    // chrome.runtime.getURL을 써서 현재 확장프로그램의 '절대 경로' 매핑
+    fontLink.href = chrome.runtime.getURL(item.url);
+
+    targetNode.appendChild(fontLink);
+  });
 }
+
+// 스크립트 실행 즉시 폰트부터 최우선 장전 (깜빡임 원천 차단)
+injectPretendardFont();
 
 if (
   document.readyState === "interactive" ||
   document.readyState === "complete"
 ) {
   executeFilterWithMinTime();
-  applyWidgetFlexLayout();
 } else {
   document.addEventListener("DOMContentLoaded", () => {
     executeFilterWithMinTime();
-    applyWidgetFlexLayout();
   });
 }
 window.addEventListener("load", () => {
@@ -1475,3 +1568,243 @@ document.addEventListener("keydown", (e) => {
     }
   }
 });
+
+/* ================= 🚀 퀵버튼 패널 ================= */
+
+const COOKIE_URL_QK = "https://www.dogdrip.net";
+const THEME_COOKIE_QK = "theme";
+const TXT_COOKIE_QK = "txtmode";
+const COLOR_CHEME_COOKIE_QK = "rx_color_scheme";
+
+function initQuickPanel() {
+  // 구형 도구모음 사용 설정이면 퀵패널 생성하지 않음
+  chrome.storage.local.get(["legacyToolbar"], (res) => {
+    if (res.legacyToolbar) return;
+    _buildQuickPanel();
+  });
+}
+
+function _buildQuickPanel() {
+  // 게시물 여부: 개드립 사이트의 스크롤 퀵버튼 박스가 있으면 게시물
+  const isPost = !!document.querySelector("div.eq.button-scroll-tool-box");
+
+  const panel = document.createElement("div");
+  panel.id = "ext-quick-panel";
+
+  // 공통 버튼 정의
+  const commonBtns = [
+    {
+      id: "extqk-top",
+      icon: "fas fa-arrow-up",
+      tooltip: "맨 위로",
+      onClick: () => window.scrollTo({ top: 0, behavior: "smooth" }),
+    },
+    {
+      id: "extqk-bottom",
+      icon: "fas fa-arrow-down",
+      tooltip: "맨 아래로",
+      onClick: () =>
+        window.scrollTo({
+          top: document.body.scrollHeight,
+          behavior: "smooth",
+        }),
+    },
+    {
+      id: "extqk-readability",
+      icon: "fas fa-book-open",
+      tooltip: "가독성 모드",
+      onClick: () => toggleReadabilityMode(),
+    },
+    {
+      id: "extqk-dogcon",
+      icon: "far fa-smile-wink",
+      tooltip: "개드립콘 절약",
+      onClick: () => toggleTxtModeQk(),
+    },
+    {
+      id: "extqk-dark",
+      icon: "fas fa-sun",
+      tooltip: "다크모드",
+      onClick: () => toggleThemeQk(),
+    },
+  ];
+
+  // 게시물 전용 버튼
+  const postBtns = [
+    {
+      id: "extqk-comment",
+      icon: "fas fa-comments",
+      tooltip: "댓글 목록",
+      onClick: () => {
+        const target = document.getElementById("comment_top");
+        if (target) target.scrollIntoView({ behavior: "smooth" });
+      },
+    },
+    {
+      id: "extqk-content",
+      icon: "fas fa-align-left",
+      tooltip: "본문",
+      onClick: () => {
+        const target = document.querySelector(".xe_content, .document_79");
+        if (target) target.scrollIntoView({ behavior: "smooth" });
+      },
+    },
+    {
+      id: "extqk-list",
+      icon: "fas fa-list-alt",
+      tooltip: "목록으로",
+      onClick: () => {
+        const target = document.getElementById("comment_end");
+        if (target) target.scrollIntoView({ behavior: "smooth" });
+      },
+    },
+  ];
+
+  const buttons = isPost ? [...commonBtns, ...postBtns] : commonBtns;
+
+  buttons.forEach(({ id, icon, tooltip, onClick }) => {
+    const btn = document.createElement("button");
+    btn.id = id;
+    btn.className = "ext-qk-btn";
+    btn.setAttribute("data-tooltip", tooltip);
+    btn.innerHTML = `<span class="ext-qk-label">${tooltip}</span><i class="${icon}"></i>`;
+    btn.addEventListener("click", onClick);
+    panel.appendChild(btn);
+  });
+
+  document.body.appendChild(panel);
+
+  // 초기 상태 반영
+  syncQuickPanelState();
+}
+
+function syncQuickPanelState() {
+  if (typeof chrome === "undefined" || !chrome.runtime || !chrome.runtime.id)
+    return;
+
+  // 가독성 모드
+  chrome.storage.local.get(["readabilityMode"], (res) => {
+    const isOn = !!res.readabilityMode;
+    const btn = document.getElementById("extqk-readability");
+    const label = isOn ? "📖 가독성 모드 ON" : "가독성 모드";
+    if (isOn) {
+      document.documentElement.classList.add("ext-readability-mode");
+    } else {
+      document.documentElement.classList.remove("ext-readability-mode");
+    }
+    if (!btn) return;
+    btn.classList.toggle("ext-qk-active", isOn);
+    btn.setAttribute("data-tooltip", label);
+    const labelEl = btn.querySelector(".ext-qk-label");
+    if (labelEl) labelEl.textContent = label;
+  });
+
+  chrome.runtime.sendMessage(
+    { type: "GET_COOKIE", name: THEME_COOKIE_QK },
+    (res) => {
+      const btn = document.getElementById("extqk-dark");
+      if (!btn) return;
+      const isDark = res && res.value === "b";
+      const label = isDark ? "🌙 다크모드 ON" : "다크모드";
+      btn.classList.toggle("ext-qk-active", isDark);
+      btn.setAttribute("data-tooltip", label);
+      const labelEl = btn.querySelector(".ext-qk-label");
+      if (labelEl) labelEl.textContent = label;
+      const iconEl = btn.querySelector("i");
+      if (iconEl) iconEl.className = isDark ? "fas fa-moon" : "fas fa-sun";
+    },
+  );
+
+  chrome.runtime.sendMessage(
+    { type: "GET_COOKIE", name: TXT_COOKIE_QK },
+    (res) => {
+      const btn = document.getElementById("extqk-dogcon");
+      if (!btn) return;
+      const isTxt = res && res.value === "1";
+      const label = isTxt ? "😶 개드립콘 절약 ON" : "개드립콘 절약";
+      btn.classList.toggle("ext-qk-active", isTxt);
+      btn.setAttribute("data-tooltip", label);
+      const labelEl = btn.querySelector(".ext-qk-label");
+      if (labelEl) labelEl.textContent = label;
+      const iconEl = btn.querySelector("i");
+      if (iconEl)
+        iconEl.className = isTxt ? "fas fa-meh-blank" : "far fa-smile-wink";
+    },
+  );
+}
+
+function toggleReadabilityMode() {
+  chrome.storage.local.get(["readabilityMode"], (res) => {
+    const newVal = !res.readabilityMode;
+    chrome.storage.local.set({ readabilityMode: newVal }, () => {
+      syncQuickPanelState();
+    });
+  });
+}
+
+function toggleThemeQk() {
+  if (typeof chrome === "undefined" || !chrome.runtime || !chrome.runtime.id)
+    return;
+  chrome.runtime.sendMessage(
+    { type: "GET_COOKIE", name: THEME_COOKIE_QK },
+    (res) => {
+      const newVal = res && res.value === "b" ? "a" : "b";
+      const isDark = newVal === "b";
+
+      // body 클래스 즉시 전환 (새로고침 전 깜빡임 방지)
+      document.body.classList.toggle("color_scheme_dark", isDark);
+      document.body.classList.toggle("color_scheme_light", !isDark);
+
+      chrome.runtime.sendMessage(
+        { type: "SET_COOKIE", name: THEME_COOKIE_QK, value: newVal },
+        () => {
+          syncQuickPanelState();
+          window.location.reload();
+        },
+      );
+    },
+  );
+  chrome.runtime.sendMessage(
+    { type: "GET_COOKIE", name: COLOR_CHEME_COOKIE_QK },
+    (res) => {
+      const newVal = res && res.value === "light" ? "dark" : "light";
+      const isDark = newVal === "dark";
+
+      chrome.runtime.sendMessage(
+        { type: "SET_COOKIE", name: COLOR_CHEME_COOKIE_QK, value: newVal },
+        () => {
+          syncQuickPanelState();
+          window.location.reload();
+        },
+      );
+    },
+  );
+}
+
+function toggleTxtModeQk() {
+  if (typeof chrome === "undefined" || !chrome.runtime || !chrome.runtime.id)
+    return;
+  chrome.runtime.sendMessage(
+    { type: "GET_COOKIE", name: TXT_COOKIE_QK },
+    (res) => {
+      const newVal = res && res.value === "1" ? "0" : "1";
+      chrome.runtime.sendMessage(
+        { type: "SET_COOKIE", name: TXT_COOKIE_QK, value: newVal },
+        () => {
+          syncQuickPanelState();
+          window.location.reload();
+        },
+      );
+    },
+  );
+}
+
+// DOMContentLoaded 이후 패널 삽입
+if (
+  document.readyState === "interactive" ||
+  document.readyState === "complete"
+) {
+  initQuickPanel();
+} else {
+  document.addEventListener("DOMContentLoaded", initQuickPanel);
+}

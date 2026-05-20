@@ -26,6 +26,8 @@ document.addEventListener("DOMContentLoaded", () => {
       "preventYoutubeAlgorithm",
       "contentWidth",
       "blockMethod",
+      "readabilityMode",
+      "legacyToolbar",
     ],
     (result) => {
       const isCompact = result.compactMode || false;
@@ -38,6 +40,8 @@ document.addEventListener("DOMContentLoaded", () => {
       const preventYoutubeCb = document.getElementById(
         "preventYoutubeAlgorithm",
       );
+      const readabilityCb = document.getElementById("readability-mode-cb");
+      const legacyToolbarCb = document.getElementById("legacy-toolbar-cb");
       const contentWidthInput = document.getElementById("content-width-input");
 
       if (hideNoticeCb) hideNoticeCb.checked = result.hideNotice || false;
@@ -47,6 +51,10 @@ document.addEventListener("DOMContentLoaded", () => {
       if (disableVoteCb) disableVoteCb.checked = result.disableVote || false;
       if (preventYoutubeCb)
         preventYoutubeCb.checked = result.preventYoutubeAlgorithm || false;
+      if (readabilityCb)
+        readabilityCb.checked = result.readabilityMode || false;
+      if (legacyToolbarCb)
+        legacyToolbarCb.checked = result.legacyToolbar || false;
       if (contentWidthInput)
         contentWidthInput.value = result.contentWidth || "";
 
@@ -76,6 +84,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const compactModeCb = document.getElementById("compact-mode-cb");
   const disableVoteCb = document.getElementById("disable-vote-cb");
   const preventYoutubeCb = document.getElementById("preventYoutubeAlgorithm");
+  const readabilityCb = document.getElementById("readability-mode-cb");
+  const legacyToolbarCb = document.getElementById("legacy-toolbar-cb");
   const applyWidthBtn = document.getElementById("apply-width-btn");
   const contentWidthInput = document.getElementById("content-width-input");
 
@@ -112,6 +122,14 @@ document.addEventListener("DOMContentLoaded", () => {
   if (preventYoutubeCb)
     preventYoutubeCb.addEventListener("change", (e) =>
       handleCheckboxChange("preventYoutubeAlgorithm", e.target.checked),
+    );
+  if (readabilityCb)
+    readabilityCb.addEventListener("change", (e) =>
+      handleCheckboxChange("readabilityMode", e.target.checked),
+    );
+  if (legacyToolbarCb)
+    legacyToolbarCb.addEventListener("change", (e) =>
+      handleCheckboxChange("legacyToolbar", e.target.checked),
     );
 
   if (applyWidthBtn) applyWidthBtn.addEventListener("click", applyCustomWidth);

@@ -30,6 +30,7 @@
         📐 레이아웃 및 기능 설정
       </div>
       <div class="nav-item" data-target="card-system">💾 시스템</div>
+      <div class="nav-item" data-target="card-about">💡 개발자 정보</div>
 
       <div class="sidebar-footer">
         <hr />
@@ -42,7 +43,7 @@
             >GitHub Issues</a
           >
           <a
-            id="check-update-link"
+            id="ext-chrome-store-link"
             href="#"
             target="_blank"
             style="
@@ -67,6 +68,16 @@
             target="_blank"
             class="update-link"
             >최신 업데이트 검사</a
+          >
+        </div>
+        <hr />
+        <div style="font-size: 11px; color: #94a3b8; line-height: 1.8">
+          개발자:
+          <a
+            href="https://2er0.io"
+            target="_blank"
+            style="font-weight: 700; color: #64748b; text-decoration: none"
+            >2er0</a
           >
         </div>
       </div>
@@ -281,6 +292,16 @@
                   >유튜브 플레이어 임베드 알고리즘 방어</span
                 ></label
               >
+              <label class="checkbox-item"
+                ><input type="checkbox" id="readability-mode-cb" /><span
+                  >가독성 모드 (Pretendard JP 폰트·줄간격·자간 최적화)</span
+                ></label
+              >
+              <label class="checkbox-item"
+                ><input type="checkbox" id="legacy-toolbar-cb" /><span
+                  >개드립 도구모음 사용 (신형 퀵버튼 패널 비활성화)</span
+                ></label
+              >
             </div>
 
             <div
@@ -396,7 +417,11 @@
           </div>
         </div>
 
-        <div class="dashboard-card" id="card-system" style="margin-top: 1rem">
+        <div
+          class="dashboard-card"
+          id="card-system-restore"
+          style="margin-top: 1rem"
+        >
           <div class="card-header">
             <h2>💾 데이터 복원하기</h2>
             <p>
@@ -420,7 +445,11 @@
           />
         </div>
 
-        <div class="dashboard-card" id="card-system" style="margin-top: 1rem">
+        <div
+          class="dashboard-card"
+          id="card-system-migrate"
+          style="margin-top: 1rem"
+        >
           <div class="card-header">
             <h2>🔗 Dogdrip++ 데이터 호환 가져오기</h2>
             <p>
@@ -443,6 +472,48 @@
             accept=".json"
             style="display: none"
           />
+        </div>
+
+        <div class="dashboard-card" id="card-about">
+          <div class="card-header">
+            <h2>💡 개드립 Plus + 에 대하여</h2>
+          </div>
+          <div
+            style="
+              padding: 8px 0;
+              line-height: 1.85;
+              color: #374151;
+              font-size: 13.5px;
+            "
+          >
+            <p style="margin: 0 0 14px 0">
+              개드립 Plus + 는 더 많은 분들이 개드립넷을 편리하고 쾌적하게
+              이용할 수 있도록 만들어진 확장프로그램입니다.
+            </p>
+            <p style="margin: 0 0 14px 0">
+              기존에 파편화되어 있던 여러 편의 기능들을 하나의 패키지로
+              통합했습니다. 유저·키워드 차단부터 레이아웃 커스터마이징까지,
+              별도의 확장프로그램을 여러 개 설치할 필요 없이 이 하나로 해결할 수
+              있도록 하는 것이 목표입니다.
+            </p>
+            <p style="margin: 0 0 20px 0">유용하게 사용해 주셔서 감사합니다.</p>
+            <div
+              style="
+                padding-top: 16px;
+                border-top: 1px dashed #e2e8f0;
+                font-size: 13px;
+                color: #64748b;
+              "
+            >
+              개발자:
+              <a
+                href="https://2er0.io"
+                target="_blank"
+                style="font-weight: 700; color: #1e293b; text-decoration: none"
+                >2er0</a
+              >
+            </div>
+          </div>
         </div>
       </div>
     </div>

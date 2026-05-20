@@ -88,3 +88,30 @@ chrome.cookies.onChanged.addListener((changeInfo) => {
     }
   }
 });
+
+// content script ↔ background 쿠키 브릿지
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "GET_COOKIE") {
+    chrome.cookies.get(
+      { url: "https://www.dogdrip.net", name: message.name },
+      (cookie) => sendResponse({ value: cookie ? cookie.value : null }),
+    );
+    return true; // 비동기 응답
+  }
+
+  if (message.type === "SET_COOKIE") {
+    chrome.cookies.set(
+      {
+        url: "https://www.dogdrip.net",
+        name: message.name,
+        value: message.value,
+        path: "/",
+        secure: true,
+        sameSite: "no_restriction",
+        expirationDate: Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60,
+      },
+      () => sendResponse({ ok: true }),
+    );
+    return true;
+  }
+});

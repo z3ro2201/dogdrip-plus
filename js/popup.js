@@ -5,6 +5,7 @@
 var COOKIE_URL = "https://www.dogdrip.net";
 var TXT_COOKIE_NAME = "txtmode";
 var THEME_COOKIE_NAME = "theme";
+var COLOR_CHEME_COOKIE_QK = "rx_color_scheme";
 
 function getTodayDateStr() {
   const d = new Date();
@@ -29,7 +30,9 @@ document.addEventListener("DOMContentLoaded", () => {
       "disableVote",
       "preventYoutubeAlgorithm",
       "contentWidth",
-      "blockMethod", // 💡 차단 방식 데이터 로드 대상 통합
+      "blockMethod",
+      "readabilityMode",
+      "legacyToolbar",
     ],
     (result) => {
       const isCompact = result.compactMode || false;
@@ -45,6 +48,10 @@ document.addEventListener("DOMContentLoaded", () => {
         result.disableVote || false;
       document.getElementById("preventYoutubeAlgorithm").checked =
         result.preventYoutubeAlgorithm || false;
+      document.getElementById("readability-mode-cb").checked =
+        result.readabilityMode || false;
+      document.getElementById("legacy-toolbar-cb").checked =
+        result.legacyToolbar || false;
 
       // 📐 가변 폭 초기 값 매핑
       document.getElementById("content-width-input").value =
@@ -109,6 +116,16 @@ document
   .getElementById("disable-vote-cb")
   .addEventListener("change", (e) =>
     handleCheckboxChange("disableVote", e.target.checked),
+  );
+document
+  .getElementById("readability-mode-cb")
+  .addEventListener("change", (e) =>
+    handleCheckboxChange("readabilityMode", e.target.checked),
+  );
+document
+  .getElementById("legacy-toolbar-cb")
+  .addEventListener("change", (e) =>
+    handleCheckboxChange("legacyToolbar", e.target.checked),
   );
 document
   .getElementById("preventYoutubeAlgorithm")
@@ -275,6 +292,13 @@ function checkCookieStatus() {
           switchEl.checked = !!(cookie && cookie.value === "1");
         },
       );
+
+      chrome.cookies.get(
+        { url: COOKIE_URL, name: COLOR_CHEME_COOKIE_QK },
+        (cookie) => {
+          switchEl.checked = !!(cookie && cookie.value === "light");
+        },
+      );
     },
   );
 }
@@ -321,14 +345,33 @@ function checkThemeCookieStatus() {
 function toggleThemeCookie() {
   chrome.cookies.get({ url: COOKIE_URL, name: THEME_COOKIE_NAME }, (cookie) => {
     let newValue = "b";
+    let themeValue = "dark";
     if (cookie && cookie.value === "b") {
       newValue = "a";
+      themeValue = "light";
     }
+
     chrome.cookies.set(
       {
         url: "https://www.dogdrip.net",
         name: THEME_COOKIE_NAME,
         value: newValue,
+        path: "/",
+        secure: true,
+        sameSite: "no_restriction",
+        expirationDate: Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60,
+      },
+      () => {
+        checkThemeCookieStatus();
+        refreshActiveTab();
+      },
+    );
+
+    chrome.cookies.set(
+      {
+        url: "https://www.dogdrip.net",
+        name: COLOR_CHEME_COOKIE_QK,
+        value: themeValue,
         path: "/",
         secure: true,
         sameSite: "no_restriction",
