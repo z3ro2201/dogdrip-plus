@@ -744,36 +744,6 @@ html.ext-readability-mode
   background-color: #4a7db5 !important;
 }
 
-/* 가독성 모드 - 링크 visited 명시적 구분 */
-html.ext-readability-mode .xe_content a:link,
-html.ext-readability-mode .ed.comment-content a:link {
-  color: #2563eb;
-  text-decoration: underline;
-}
-
-html.ext-readability-mode .xe_content a:visited,
-html.ext-readability-mode .ed.comment-content a:visited {
-  color: #7c3aed;
-}
-html.ext-readability-mode .xe_content a:hover,
-html.ext-readability-mode .ed.comment-content a:hover {
-  color: #1d4ed8;
-}
-
-/* 다크모드 */
-html.ext-readability-mode body.color_scheme_dark .xe_content a:link,
-html.ext-readability-mode body.color_scheme_dark .ed.comment-content a:link {
-  color: #60a5fa;
-}
-html.ext-readability-mode body.color_scheme_dark .xe_content a:visited,
-html.ext-readability-mode body.color_scheme_dark .ed.comment-content a:visited {
-  color: #c084fc;
-}
-html.ext-readability-mode body.color_scheme_dark .xe_content a:hover,
-html.ext-readability-mode body.color_scheme_dark .ed.comment-content a:hover {
-  color: #93c5fd;
-}
-
 /* ================= 🚀 퀵버튼 패널 ================= */
 
 /* 기존 퀵 패널 제거 */
