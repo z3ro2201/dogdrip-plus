@@ -576,7 +576,10 @@ body.color_scheme_dark .ed.webzine.popular-item .title .title-link {
   font-weight: bold !important;
 }
 body.color_scheme_dark .ed a {
-  color: #d3d3d3 !important;
+  color: #fff !important;
+}
+body.color_scheme_dark .ed a:visited {
+  color: #9a9a9a !important;
 }
 body.color_scheme_dark .ed .current a {
   color: #909090 !important;
