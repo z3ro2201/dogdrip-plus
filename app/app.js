@@ -1609,24 +1609,6 @@ function _buildQuickPanel() {
           behavior: "smooth",
         }),
     },
-    {
-      id: "extqk-readability",
-      icon: "fas fa-book-open",
-      tooltip: "가독성 모드",
-      onClick: () => toggleReadabilityMode(),
-    },
-    {
-      id: "extqk-dogcon",
-      icon: "far fa-smile-wink",
-      tooltip: "개드립콘 절약",
-      onClick: () => toggleTxtModeQk(),
-    },
-    {
-      id: "extqk-dark",
-      icon: "fas fa-sun",
-      tooltip: "다크모드",
-      onClick: () => toggleThemeQk(),
-    },
   ];
 
   // 게시물 전용 버튼
@@ -1660,7 +1642,31 @@ function _buildQuickPanel() {
     },
   ];
 
-  const buttons = isPost ? [...commonBtns, ...postBtns] : commonBtns;
+  // 공통 유틸리티 버튼
+  const commonToolsBtns = [
+    {
+      id: "extqk-readability",
+      icon: "fas fa-book-open",
+      tooltip: "가독성 모드",
+      onClick: () => toggleReadabilityMode(),
+    },
+    {
+      id: "extqk-dogcon",
+      icon: "far fa-smile-wink",
+      tooltip: "개드립콘 절약",
+      onClick: () => toggleTxtModeQk(),
+    },
+    {
+      id: "extqk-dark",
+      icon: "fas fa-sun",
+      tooltip: "다크모드",
+      onClick: () => toggleThemeQk(),
+    },
+  ];
+
+  const buttons = isPost
+    ? [...commonBtns, ...postBtns, ...commonToolsBtns]
+    : [...commonBtns, ...commonToolsBtns];
 
   buttons.forEach(({ id, icon, tooltip, onClick }) => {
     const btn = document.createElement("button");
