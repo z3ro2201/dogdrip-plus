@@ -1,1074 +1,286 @@
-/**
- * 대화면 마스터 대시보드(options.html) 전용 스크립트 (가져오기 버튼 링크 먹통 버그 완벽 수선판)
- */
-
-document.addEventListener("DOMContentLoaded", () => {
-  // 1. 🚀 외부 공용 파일로 분리된 원격 버전 교차 검증 모듈 작동
-  if (typeof execFilterVersionCheck === "function") {
-    execFilterVersionCheck();
-  }
-
-  // 2. 크롬 스토리지에서 전체 차단 리스트 및 유저 메모 로드
-  loadData("keywords", "keyword-list");
-  loadData("blocked_users", "nickname-list");
-  loadData("blockedDogcons", "dogcon-list");
-  loadData("blockedDogconGroups", "dogcon-group-list");
-  if (typeof loadDashboardUserMemos === "function") loadDashboardUserMemos();
-
-  // 3. 📐 레이아웃 제어 체크박스 및 차단 방식 라디오 상태 일괄 복원
-  chrome.storage.local.get(
-    [
-      "hideNotice",
-      "hidePopular",
-      "hideSidebar",
-      "compactMode",
-      "disableVote",
-      "preventYoutubeAlgorithm",
-      "contentWidth",
-      "blockMethod",
-      "readabilityMode",
-      "legacyToolbar",
-    ],
-    (result) => {
-      const isCompact = result.compactMode || false;
-
-      const hideNoticeCb = document.getElementById("hide-notice-cb");
-      const hidePopularCb = document.getElementById("hide-popular-cb");
-      const hideSidebarCb = document.getElementById("hide-sidebar-cb");
-      const compactModeCb = document.getElementById("compact-mode-cb");
-      const disableVoteCb = document.getElementById("disable-vote-cb");
-      const preventYoutubeCb = document.getElementById(
-        "preventYoutubeAlgorithm",
-      );
-      const readabilityCb = document.getElementById("readability-mode-cb");
-      const legacyToolbarCb = document.getElementById("legacy-toolbar-cb");
-      const contentWidthInput = document.getElementById("content-width-input");
-
-      if (hideNoticeCb) hideNoticeCb.checked = result.hideNotice || false;
-      if (hidePopularCb) hidePopularCb.checked = result.hidePopular || false;
-      if (hideSidebarCb) hideSidebarCb.checked = result.hideSidebar || false;
-      if (compactModeCb) compactModeCb.checked = isCompact;
-      if (disableVoteCb) disableVoteCb.checked = result.disableVote || false;
-      if (preventYoutubeCb)
-        preventYoutubeCb.checked = result.preventYoutubeAlgorithm || false;
-      if (readabilityCb)
-        readabilityCb.checked = result.readabilityMode || false;
-      if (legacyToolbarCb)
-        legacyToolbarCb.checked = result.legacyToolbar || false;
-      if (contentWidthInput)
-        contentWidthInput.value = result.contentWidth || "";
-
-      const method = result.blockMethod || "remove";
-      const methodBlind = document.getElementById("block-method-blind");
-      const methodRemove = document.getElementById("block-method-remove");
-      const methodBadge = document.getElementById("block-method-badge");
-
-      if (method === "blind" && methodBlind) {
-        methodBlind.checked = true;
-      } else if (method === "badge" && methodBadge) {
-        methodBadge.checked = true;
-      } else if (methodRemove) {
-        methodRemove.checked = true;
-      }
-
-      toggleWidthFormState(isCompact);
-    },
-  );
-
-  // 4. 레이아웃 체크박스 및 라디오 버튼 실시간 동기화 바인딩
-  const hideNoticeCb = document.getElementById("hide-notice-cb");
-  const hidePopularCb = document.getElementById("hide-popular-cb");
-  const hideSidebarCb = document.getElementById("hide-sidebar-cb");
-  const methodRemove = document.getElementById("block-method-remove");
-  const methodBlind = document.getElementById("block-method-blind");
-  const compactModeCb = document.getElementById("compact-mode-cb");
-  const disableVoteCb = document.getElementById("disable-vote-cb");
-  const preventYoutubeCb = document.getElementById("preventYoutubeAlgorithm");
-  const readabilityCb = document.getElementById("readability-mode-cb");
-  const legacyToolbarCb = document.getElementById("legacy-toolbar-cb");
-  const applyWidthBtn = document.getElementById("apply-width-btn");
-  const contentWidthInput = document.getElementById("content-width-input");
-
-  if (hideNoticeCb)
-    hideNoticeCb.addEventListener("change", (e) =>
-      handleCheckboxChange("hideNotice", e.target.checked),
-    );
-  if (hidePopularCb)
-    hidePopularCb.addEventListener("change", (e) =>
-      handleCheckboxChange("hidePopular", e.target.checked),
-    );
-  if (hideSidebarCb)
-    hideSidebarCb.addEventListener("change", (e) =>
-      handleCheckboxChange("hideSidebar", e.target.checked),
-    );
-
-  if (methodRemove)
-    methodRemove.addEventListener("change", handleBlockMethodRadioChange);
-  if (methodBlind)
-    methodBlind.addEventListener("change", handleBlockMethodRadioChange);
-
-  if (compactModeCb) {
-    compactModeCb.addEventListener("change", (e) => {
-      const isChecked = e.target.checked;
-      toggleWidthFormState(isChecked);
-      handleCheckboxChange("compactMode", isChecked);
-    });
-  }
-
-  if (disableVoteCb)
-    disableVoteCb.addEventListener("change", (e) =>
-      handleCheckboxChange("disableVote", e.target.checked),
-    );
-  if (preventYoutubeCb)
-    preventYoutubeCb.addEventListener("change", (e) =>
-      handleCheckboxChange("preventYoutubeAlgorithm", e.target.checked),
-    );
-  if (readabilityCb)
-    readabilityCb.addEventListener("change", (e) =>
-      handleCheckboxChange("readabilityMode", e.target.checked),
-    );
-  if (legacyToolbarCb)
-    legacyToolbarCb.addEventListener("change", (e) =>
-      handleCheckboxChange("legacyToolbar", e.target.checked),
-    );
-
-  if (applyWidthBtn) applyWidthBtn.addEventListener("click", applyCustomWidth);
-  if (contentWidthInput) {
-    contentWidthInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") applyCustomWidth();
-    });
-  }
-
-  // =========================================================================
-  // ⚡ 5. 좌측 사이드바 탭 메뉴 클릭 시 데이터 실시간 재로드 및 카드 스위칭 인터랙션
-  // =========================================================================
-  const navItems = document.querySelectorAll(".nav-item");
-  const mainTitleEl = document.getElementById("main-title");
-
-  navItems.forEach((item) => {
-    item.addEventListener("click", () => {
-      // ① 기존 활성화된 메뉴 탭 스타일 제거 및 현재 선택된 탭 강조
-      navItems.forEach((nav) => nav.classList.remove("active"));
-      item.classList.add("active");
-
-      // ② 타이틀에서 이모지/특수문자 제거 후 텍스트만 깔끔하게 상단 헤더에 반영
-      if (mainTitleEl) {
-        mainTitleEl.innerText = item.innerText
-          .replace(
-            /[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDC00-\uDFFF]/g,
-            "",
-          )
-          .trim();
-      }
-
-      // ③ 대상 카드 레이아웃 전환(Show/Hide) 제어
-      const targetId = item.getAttribute("data-target");
-      const cards = document.querySelectorAll(".dashboard-card");
-      cards.forEach((card) => {
-        if (card.id === targetId) {
-          card.classList.add("active");
-        } else {
-          card.classList.remove("active");
-        }
-      });
-
-      // 🔥 [핵심 추가] 메뉴 이동(탭 클릭) 감지 즉시 해당 메뉴에 맞는 크롬 스토리지 데이터 정밀 동적 새로고침
-      switch (targetId) {
-        case "card-keyword":
-          loadData("keywords", "keyword-list");
-          break;
-        case "card-nickname":
-          loadData("blocked_users", "nickname-list");
-          break;
-        case "card-memo":
-          if (typeof loadDashboardUserMemos === "function")
-            loadDashboardUserMemos();
-          break;
-        case "card-dogcon":
-          loadData("blockedDogcons", "dogcon-list");
-          break;
-        case "card-group":
-          loadData("blockedDogconGroups", "dogcon-group-list");
-          break;
-        default:
-          break;
-      }
-    });
-  });
-
-  // 6. 🛠️ 미니 팝업창 취소 단추 리스너
-  const cancelBtn = document.getElementById("ext-dash-popup-cancel-btn");
-  if (cancelBtn) {
-    cancelBtn.addEventListener("click", () => {
-      const popup = document.getElementById("ext-dashboard-memo-edit-popup");
-      if (popup) popup.style.display = "none";
-    });
-  }
-
-  // 7. 🚀 [반응 없음 버그 완전 진압] 가져오기/내보내기 클릭 회로를 DOM 안정지대 안으로 완벽 이식
-  // ① 순정 데이터 내보내기 (백업)
-  const backupBtn = document.getElementById("backup-btn");
-  if (backupBtn) {
-    backupBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      backupSettings();
-    });
-  }
-
-  // ② 순정 데이터 가져오기 (복원) - 변수 선언과 동시에 리스너 결합하여 허공 분출 방지
-  const restoreBtn = document.getElementById("restore-btn");
-  const fileInput = document.getElementById("file-input");
-  if (restoreBtn && fileInput) {
-    restoreBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      fileInput.click();
-    });
-    fileInput.addEventListener("change", restoreSettings);
-  }
-
-  // ③ 타사 Dogdrip++ 데이터 호환 가져오기
-  const plusPlusRestoreBtn = document.getElementById(
-    "ext-dogdrip-plus-plus-restore-btn",
-  );
-  const plusPlusFileInput = document.getElementById("ext-plus-plus-file-input");
-  if (plusPlusRestoreBtn && plusPlusFileInput) {
-    plusPlusRestoreBtn.addEventListener("click", (e) => {
-      e.preventDefault();
-      plusPlusFileInput.click(); // 숨겨진 타사 input file 강제 클릭 트리거
-    });
-    plusPlusFileInput.addEventListener("change", restoreFromDogdripPlusPlus);
-  }
-
-  // =========================================================================
-  // 🔍 [NEW] 키워드 리스트 및 차단 유저 목록 실시간 다이내믹 검색 필터 바인딩
-  // =========================================================================
-  const keywordSearchInput = document.getElementById(
-    "ext-keyword-search-input",
-  );
-  if (keywordSearchInput) {
-    keywordSearchInput.addEventListener("input", () => {
-      loadData("keywords", "keyword-list"); // 입력값 변화에 맞춰 데이터 재조회 매핑
-    });
-  }
-
-  const userSearchInput = document.getElementById("ext-user-search-input");
-  if (userSearchInput) {
-    userSearchInput.addEventListener("input", () => {
-      loadData("blocked_users", "nickname-list"); // 입력값 변화에 맞춰 데이터 재조회 매핑
-    });
-  }
-
-  // 키워드 전역 모달 취소 단추 기믹 스위치 연결
-  const keywordCancelBtn = document.getElementById(
-    "ext-keyword-popup-cancel-btn",
-  );
-  if (keywordCancelBtn) {
-    keywordCancelBtn.addEventListener("click", () => {
-      document.getElementById(
-        "ext-dashboard-keyword-edit-popup",
-      ).style.display = "none";
-    });
-  }
-
-  // =========================================================================
-  // ➕ [NEW] 신규 조건형 키워드 추가 등록 리스너 회로 결합
-  // =========================================================================
-  const newKeywordAddBtn = document.getElementById("ext-new-keyword-add-btn");
-  const newKeywordInput = document.getElementById("ext-new-keyword-input");
-
-  if (newKeywordAddBtn) {
-    newKeywordAddBtn.addEventListener("click", () => {
-      addNewKeywordObjectItem(); // 신형 객체 적재 함수 호출
-    });
-  }
-
-  if (newKeywordInput) {
-    newKeywordInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter" && newKeywordAddBtn) newKeywordAddBtn.click();
-    });
-  }
-}); // 💡 DOMContentLoaded 종료 괄호선 위치 확인용
-
-/* ================= 🍪 기능 코어 연산 엔진 구역 ================= */
-function getTodayDateStr() {
-  const d = new Date();
-  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
-}
-
-function handleBlockMethodRadioChange(e) {
-  if (e.target.checked) {
-    chrome.storage.local.set({ blockMethod: e.target.value }, () => {
-      refreshActiveTabs();
-    });
-  }
-}
-function handleCheckboxChange(key, value) {
-  chrome.storage.local.set({ [key]: value }, () => {
-    refreshActiveTabs();
-  });
-}
-
-function loadData(key, containerId) {
-  chrome.storage.local.get([key], (result) => {
-    let list = result[key] || [];
-
-    // 💡 [검색 가드] 인풋 검색어 입력 상태를 확인하여 렌더링 리스트 전면 실시간 필터링 분기
-    if (key === "keywords") {
-      const query = document
-        .getElementById("ext-keyword-search-input")
-        ?.value.trim()
-        .toLowerCase();
-      if (query) {
-        list = list.filter((item) => {
-          const word = (item.word || item.keyword || "").toLowerCase();
-          return word.includes(query);
-        });
-      }
-    } else if (key === "blocked_users") {
-      const query = document
-        .getElementById("ext-user-search-input")
-        ?.value.trim()
-        .toLowerCase();
-      if (query) {
-        list = list.filter((item) => {
-          const memo = (item.memo || "").toLowerCase();
-          const memberId = String(item.member_num || "");
-          return memo.includes(query) || memberId.includes(query);
-        });
-      }
-    }
-
-    renderList(list, key, containerId);
-  });
-}
-
-function removeListItem(key, value, containerId) {
-  chrome.storage.local.get([key], (result) => {
-    let list = result[key] || [];
-    if (key === "blockedDogcons" || key === "blockedDogconGroups") {
-      list = list.filter((item) => item.id !== value.id);
-    } else if (key === "blocked_users") {
-      list = list.filter(
-        (item) => String(item.member_num) !== String(value.member_num),
-      );
-    } else if (key === "keywords") {
-      list = list.filter((item) => item.word !== value.word);
-    } else {
-      list = list.filter((item) => item !== value);
-    }
-
-    chrome.storage.local.set({ [key]: list }, () => {
-      renderList(list, key, containerId);
-      refreshActiveTabs();
-    });
-  });
-}
-
-function renderList(list, key, containerId) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  container.innerHTML = "";
-
-  if (list.length === 0) {
-    container.innerHTML =
-      '<span style="color: #94a3b8; font-size: 13px;">차단 등록된 내역이 현재 비어있습니다.</span>';
-    return;
-  }
-
-  list.forEach((item) => {
-    const badge = document.createElement("span");
-    badge.className = "badge";
-
-    if (key === "blockedDogcons" || key === "blockedDogconGroups") {
-      badge.innerText = item.name;
-      badge.title = `ID: ${item.id}`;
-    } else if (key === "blocked_users") {
-      const dateLabel = item.date || "2026/05/19";
-      badge.innerHTML = `
+"use strict";(()=>{var w=[{menuName:"\uAC1C\uB4DC\uB9BD",mid:"dogdrip",menuItems:[{subMenuName:"\uAC1C\uB4DC\uB9BD",url:"/dogdrip",mid:"dogdrip"},{subMenuName:"\uAC1C\uB4DC\uB9BD \uC778\uAE30\uAE00",url:"/?mid=dogdrip&sort_index=popular",mid:"dogdrip__popular"}],url:"/dogdrip"},{menuName:"\uC720\uC800 \uAC1C\uB4DC\uB9BD",mid:"userdog",menuItems:[{subMenuName:"\uC720\uC800 \uAC1C\uB4DC\uB9BD",url:"/userdog",mid:"userdog"},{subMenuName:"\uC720\uC800 \uAC1C\uB4DC\uB9BD \uC778\uAE30\uAE00",url:"/?mid=userdog&sort_index=popular",mid:"userdog__popular"},{subMenuName:"\uBD90\uC5C5 \uBCA0\uC2A4\uD2B8",url:"/boomupbest",mid:"boomupbest"},{subMenuName:"\uC774\uBBF8\uC9C0 \uC800\uC7A5\uC18C",url:"/imagestorage",mid:"imagestorage"}],url:"/userdog"},{menuName:"\uD56B\uB51C",mid:"hotdeal",menuItems:[{subMenuName:"\uD56B\uB51C \uD310",url:"/hotdeal",mid:"hotdeal"}],url:"/hotdeal"},{menuName:"\uC77D\uC744\uAC70\uB9AC \uD310",mid:"doc",menuItems:[{subMenuName:"\uC77D\uC744\uAC70\uB9AC \uD310",url:"/doc",mid:"doc"},{subMenuName:"\uC77D\uC744\uAC70\uB9AC \uC778\uAE30\uAE00",url:"/?mid=doc&sort_index=popular",mid:"doc__popular"},{subMenuName:"\uAE30\uBB18\uD55C \uC774\uC57C\uAE30",url:"/?mid=doc&category=18567749",mid:"doc__cat_18567749"},{subMenuName:"\uD638\uB7EC \uAD34\uB2F4",url:"/?mid=doc&category=18568364",mid:"doc__cat_18568364"},{subMenuName:"\uAC10\uB3D9",url:"/?mid=doc&category=18568507",mid:"doc__cat_18568507"},{subMenuName:"\uC790\uC5F0",url:"/?mid=doc&category=22526541",mid:"doc__cat_22526541"},{subMenuName:"\uC720\uBA38",url:"/?mid=doc&category=18567755",mid:"doc__cat_18567755"},{subMenuName:"\uACFC\uD559",url:"/?mid=doc&category=22526555",mid:"doc__cat_22526555"},{subMenuName:"\uC5ED\uC0AC",url:"/?mid=doc&category=22526565",mid:"doc__cat_22526565"},{subMenuName:"\uAE30\uD0C0 \uC9C0\uC2DD",url:"/?mid=doc&category=22526322",mid:"doc__cat_22526322"}],url:"/doc"},{menuName:"\uCEE4\uBBA4\uB2C8\uD2F0",mid:"communitypage",menuItems:[{subMenuName:"\uC8FC\uC2DD/\uC7AC\uD0DC\uD06C \uD310",url:"/stock",mid:"stock"},{subMenuName:"\uC778\uD130\uB137 \uBC29\uC1A1 \uD310",url:"/ib",mid:"ib"},{subMenuName:"\uC775\uBA85 \uD310",url:"/free",mid:"free"},{subMenuName:"\uCEF4\uD4E8\uD130 / IT \uD310",url:"/computer",mid:"computer"},{subMenuName:"\uC601\uC0C1 \uD310",url:"/movie",mid:"movie"},{subMenuName:"\uACE0\uBBFC \uC0C1\uB2F4 \uD310",url:"/consultation",mid:"consultation"},{subMenuName:"\uD0C8\uAC83 \uD310",url:"/vehicle",mid:"vehicle"},{subMenuName:"\uCF54\uC778 \uD310",url:"/coin",mid:"coin"},{subMenuName:"\uC2A4\uD3EC\uCE20 \uD310",url:"/sports",mid:"sports"},{subMenuName:"\uC694\uB9AC \uD310",url:"/cook",mid:"cook"},{subMenuName:"\uB355\uD6C4 \uD310",url:"/duck",mid:"duck"},{subMenuName:"\uCC3D\uC791 \uD310",url:"/creation",mid:"creation"},{subMenuName:"\uC74C\uC545 \uD310",url:"/music",mid:"music"},{subMenuName:"\uC815\uCE58 \uC0AC\uD68C \uD310",url:"/politics",mid:"politics"},{subMenuName:"\uC820\uB354 \uC774\uC288 \uD310",url:"/genderissue",mid:"genderissue"}],url:"/communitypage"},{menuName:"\uAC8C\uC784 \uD310",mid:"gamepage",menuItems:[{subMenuName:"\uAC8C\uC784 \uD310",url:"/game",mid:"game"},{subMenuName:"\uAC8C\uC784 \uC5F0\uC7AC / \uC815\uBCF4 \uD310",url:"/gameserial",mid:"gameserial"},{subMenuName:"\uBAA8\uBC14\uC77C \uAC8C\uC784 \uD310",url:"/mobilegame",mid:"mobilegame"},{subMenuName:"\uB85C\uC2A4\uD2B8\uC544\uD06C \uD310",url:"/lostark",mid:"lostark"},{subMenuName:"\uB514\uC544\uBE14\uB85C \uD310",url:"/diablo",mid:"diablo"},{subMenuName:"\uB9AC\uADF8 \uC624\uBE0C \uB808\uC804\uB4DC \uD310",url:"/lol",mid:"lol"},{subMenuName:"\uCF58\uC194 \uAC8C\uC784 \uD310",url:"/console",mid:"console"},{subMenuName:"\uB358\uC804 \uC564 \uD30C\uC774\uD130 \uD310",url:"/df",mid:"df"}],url:"/gamepage"},{menuName:"\uB180\uC774\uD130",mid:"pic",menuItems:[{subMenuName:"\uAC1C\uB4DC\uB9BD\uCF58 \uC8FC\uAC04\uC778\uAE30",url:"/dogcon?sort_index=popular_week",mid:"dogcon__popular_week"},{subMenuName:"\uAC1C\uB4DC\uB9BD\uCF58",url:"/dogcon",mid:"dogcon"},{subMenuName:"\uAC78\uADF8\uB8F9 \uD310",url:"/girlgroup",mid:"girlgroup"},{subMenuName:"\uC9E4\uBC29 \uD310",url:"/pic",mid:"pic"},{subMenuName:"\uC2DC\uAC04 \uB5BC\uC6B0\uAE30 \uD310",url:"/surplustime",mid:"surplustime"}],url:"/pic"},{menuName:"\uAE30\uD0C0",mid:"notice",menuItems:[{subMenuName:"\uACF5\uC9C0\uC0AC\uD56D",url:"/notice",mid:"notice"},{subMenuName:"\uAC74\uC758 \uC2E0\uACE0 \uD310",url:"/suggests",mid:"suggests"}],url:"/notice"}];var k=[{id:"extqk-top",label:"\uB9E8 \uC704\uB85C",postOnly:!1},{id:"extqk-bottom",label:"\uB9E8 \uC544\uB798\uB85C",postOnly:!1},{id:"extqk-comment",label:"\uB313\uAE00 \uBAA9\uB85D",postOnly:!0},{id:"extqk-content",label:"\uBCF8\uBB38",postOnly:!0},{id:"extqk-list",label:"\uBAA9\uB85D\uC73C\uB85C",postOnly:!0},{id:"extqk-prev",label:"\uC774\uC804\uAE00",postOnly:!0},{id:"extqk-next",label:"\uB2E4\uC74C\uAE00",postOnly:!0},{id:"extqk-readability",label:"\uAC00\uB3C5\uC131 \uBAA8\uB4DC",postOnly:!1},{id:"extqk-dogcon",label:"\uAC1C\uB4DC\uB9BD\uCF58 \uC808\uC57D",postOnly:!1},{id:"extqk-dark",label:"\uB2E4\uD06C\uBAA8\uB4DC",postOnly:!1}],M=k.map(e=>e.id);function C(){let e=document.getElementById("app");e&&(e.innerHTML=`
+    <div class="sidebar">
+      <div class="sidebar-brand" style="display:flex;">
+        <p style="margin-right:1rem">\u2699\uFE0F</p>
+        <p>\uAC1C\uB4DC\uB9BD \uD50C\uB7EC\uC2A4+<br/>\uC0C1\uC138 \uC124\uC815</p>
+      </div>
+      <div class="nav-item active" data-target="card-keyword">\u{1F6AB} \uCC28\uB2E8 \uD0A4\uC6CC\uB4DC</div>
+      <div class="nav-item" data-target="card-nickname">\u{1F464} \uC0AC\uC6A9\uC790 \uCC28\uB2E8</div>
+      <div class="nav-item" data-target="card-memo">\u{1F4DD} \uC720\uC800 \uBA54\uBAA8 \uAD00\uB9AC</div>
+      <div class="nav-item" data-target="card-dogcon">\u{1F5BC}\uFE0F \uCC28\uB2E8 \uAC1C\uB4DC\uB9BD\uCF58 (\uB2E8\uC77C)</div>
+      <div class="nav-item" data-target="card-group">\u{1F4E6} \uCC28\uB2E8 \uAC1C\uB4DC\uB9BD\uCF58 (\uADF8\uB8F9)</div>
+      <div class="nav-item" data-target="card-layout">\u{1F4D0} \uB808\uC774\uC544\uC6C3 \uBC0F \uAE30\uB2A5 \uC124\uC815</div>
+      <div class="nav-item" data-target="card-quickpanel">\u26A1 \uD035\uD328\uB110 \uBC84\uD2BC \uC124\uC815</div>
+      <div class="nav-item" data-target="card-system">\u{1F4BE} \uC2DC\uC2A4\uD15C</div>
+      <div class="nav-item" data-target="card-about">\u{1F4A1} \uAC1C\uBC1C\uC790 \uC815\uBCF4</div>
+      <div class="sidebar-footer">
+        <hr/>
+        <div style="margin-top:1rem;margin-bottom:1rem;">
+          <div style="font-weight:bold;">\uBC84\uADF8/\uC758\uACAC \uC81C\uBCF4</div>
+          <a style="display:block;" href="https://github.com/z3ro2201/dogdrip-plus/issues" class="update-link">GitHub Issues</a>
+          <a id="ext-chrome-store-link" href="https://chromewebstore.google.com/detail/%EA%B0%9C%EB%93%9C%EB%A6%BD-plus-+/lgecpekknekcdoigcnjbfncmloiaaejc" target="_blank" style="display:block;margin-top:4px;color:#0284c7;text-decoration:none;font-weight:700;">\uD06C\uB86C \uC6F9\uC2A4\uD1A0\uC5B4</a>
+        </div>
+        <hr/>
+        <div style="font-weight:bold;">\uD655\uC7A5\uD504\uB85C\uADF8\uB7A8 \uC815\uBCF4</div>
         <div>
-          <p style="margin:0; font-weight:bold;">👤 번호: ${item.member_num}</p>
-          <p style="margin:0; margin-top:2px; font-size:0.75rem; color:#6b7280;">등록일: ${dateLabel}</p>
-          ${item.memo ? `<p style="margin:0; margin-top:2px; font-size:0.75rem; color:#ef4444;">사유: ${item.memo}</p>` : ""}
-        </div>`;
-      badge.title = `회원고유ID: ${item.member_num}`;
-    } else if (key === "keywords") {
-      const keywordText = item.word || item.keyword;
-      const methodText = item.method === "starts" ? "시작단어" : "포함";
-      const targetText =
-        item.target === "comments" || item.target === "comment"
-          ? "댓글"
-          : item.target === "posts" || item.target === "post"
-            ? "게시글"
-            : "전체(게시글, 댓글)";
+          <div class="popup-footer" style="margin-top:10px;font-size:11px;">
+            \uBC84\uC804: <span id="ext-version" style="font-weight:700;">v 0.0.0</span>
+          </div>
+          <a id="check-update-link" href="https://github.com/z3ro2201/dogdrip-plus" target="_blank" class="update-link">\uCD5C\uC2E0 \uC5C5\uB370\uC774\uD2B8 \uAC80\uC0AC</a>
+        </div>
+        <hr/>
+        <div style="font-size:11px;color:#94a3b8;line-height:1.8;">
+          \uAC1C\uBC1C\uC790: <a href="https://2er0.io" target="_blank" style="font-weight:700;color:#64748b;text-decoration:none;">2er0</a>
+        </div>
+      </div>
+    </div>
 
-      badge.innerHTML = `
-        <div style="cursor: pointer;" class="ext-keyword-clickable-item">
-          <p style="margin:0; font-weight:bold;">⌨️ ${keywordText}</p>
-          <p style="margin:0; margin-top:2px; font-size:0.72rem; color:#2563eb;">조건: [${targetText}] [${methodText}] 시</p>
-        </div>`;
+    <div class="main-container">
+      <div class="top-header">
+        <h1 id="main-title">\uCC28\uB2E8 \uD0A4\uC6CC\uB4DC</h1>
+      </div>
+      <div class="content-panel">
 
-      // 🚀 [NEW] 키워드 목록 엘리먼트 클릭 시 상세 조건 변경 콤보박스 모달창 소환 루틴
-      badge
-        .querySelector(".ext-keyword-clickable-item")
-        .addEventListener("click", (e) => {
-          openDashboardKeywordEditPopup(item);
-        });
-    } else {
-      badge.innerText = item;
-    }
+        <!-- \uD0A4\uC6CC\uB4DC -->
+        <div class="dashboard-card active" id="card-keyword">
+          <div class="card-header">
+            <h2>\u{1F6AB} \uC870\uAC74\uBCC4 \uD0A4\uC6CC\uB4DC \uCC28\uB2E8 \uBAA9\uB85D \uAD00\uB9AC</h2>
+            <p>\uB4F1\uB85D\uB41C \uD0A4\uC6CC\uB4DC\uBCC4\uB85C \uD0C0\uAC9F \uC601\uC5ED \uBC0F \uB9E4\uCE6D \uBC29\uC2DD \uC870\uAC74\uC5D0 \uB9DE\uCDB0 \uBAA9\uB85D\uC744 \uC815\uBC00 \uD544\uD130\uB9C1\uD569\uB2C8\uB2E4.</p>
+            <div class="ext-keyword-add-form-container" style="display:flex;gap:8px;align-items:center;background:#f8fafc;padding:12px;border-radius:8px;border:1px solid #e2e8f0;margin-top:14px;margin-bottom:14px;flex-wrap:wrap;">
+              <input type="text" id="ext-new-keyword-input" placeholder="\uCC28\uB2E8\uD560 \uD0A4\uC6CC\uB4DC \uC785\uB825..." style="flex-grow:1;min-width:160px;padding:6px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;"/>
+              <select id="ext-new-keyword-method" style="padding:6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;background:#fff;cursor:pointer;">
+                <option value="includes">\uD3EC\uD568</option>
+                <option value="starts">\uC2DC\uC791</option>
+              </select>
+              <select id="ext-new-keyword-target" style="padding:6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;background:#fff;cursor:pointer;">
+                <option value="all">\uC804\uCCB4(\uB313\uAE00, \uC81C\uBAA9)</option>
+                <option value="comments">\uB313\uAE00</option>
+                <option value="posts">\uC81C\uBAA9</option>
+              </select>
+              <button id="ext-new-keyword-add-btn" style="padding:6px 16px;background:#1e293b;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:bold;cursor:pointer;white-space:nowrap;">\uCD94\uAC00</button>
+            </div>
+            <div style="margin-top:12px;">
+              <input type="text" id="ext-keyword-search-input" placeholder="\u{1F50D} \uCC28\uB2E8 \uD0A4\uC6CC\uB4DC\uBA85\uC73C\uB85C \uAC80\uC0C9..." style="width:100%;max-width:300px;padding:6px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;"/>
+            </div>
+          </div>
+          <div id="keyword-list" class="list-container"></div>
+        </div>
 
-    const delBtn = document.createElement("button");
-    delBtn.innerText = "×";
-    delBtn.addEventListener("click", () =>
-      removeListItem(key, item, containerId),
-    );
-    badge.appendChild(delBtn);
-    container.appendChild(badge);
-  });
-}
+        <!-- \uC0AC\uC6A9\uC790 \uCC28\uB2E8 -->
+        <div class="dashboard-card" id="card-nickname">
+          <div class="card-header">
+            <h2>\u{1F464} \uCC28\uB2E8\uB41C \uC0AC\uC6A9\uC790 \uBAA9\uB85D \uAD00\uB9AC</h2>
+            <p>\uC774\uACF3\uC5D0 \uC124\uC815\uB41C \uC0AC\uC6A9\uC790\uB294 \uAC8C\uC2DC\uAE00 \uBC0F \uB313\uAE00 \uBAA9\uB85D\uC5D0 \uBCF4\uC774\uC9C0 \uC54A\uAC8C \uB429\uB2C8\uB2E4.</p>
+            <div style="margin-top:12px;">
+              <input type="text" id="ext-user-search-input" placeholder="\u{1F50D} \uCC28\uB2E8 \uC0AC\uC720(\uBA54\uBAA8) \uB0B4\uC6A9\uC73C\uB85C \uAC80\uC0C9..." style="width:100%;max-width:300px;padding:6px 12px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;"/>
+            </div>
+          </div>
+          <div id="nickname-list" class="list-container"></div>
+        </div>
 
-function loadDashboardUserMemos() {
-  const container = document.getElementById("user-memo-dashboard-list");
-  if (!container) return;
-  container.innerHTML = "";
-  chrome.storage.local.get(["userMemos"], (result) => {
-    const memos = Array.isArray(result.userMemos) ? result.userMemos : [];
-    if (memos.length === 0) {
-      container.innerHTML =
-        '<span style="color: #94a3b8; font-size: 13px;">등록된 유저 메모 내역이 현재 비어있습니다.</span>';
-      return;
-    }
-    memos.forEach((entry) => {
-      const mid = String(entry.member_num);
-      const memoText = entry.memo || "";
-      const colorStyle = entry.color || "blue";
-      const dateStr = entry.date ? ` · ${entry.date}` : "";
-      const memoBadge = document.createElement("span");
-      memoBadge.className = `ext-user-memo-badge ext-memo-${colorStyle}`;
-      memoBadge.style.cssText =
-        "padding: 6px 12px; font-size: 12px; border-radius: 6px; cursor: pointer; margin: 4px;";
-      memoBadge.innerText = `${memoText} (ID: ${mid}${dateStr})`;
-      memoBadge.title = "클릭하여 메모 내용 수정 및 삭제";
-      memoBadge.addEventListener("click", () => {
-        openDashboardMemoPopup(mid, entry);
-      });
-      container.appendChild(memoBadge);
-    });
-  });
-}
+        <!-- \uC720\uC800 \uBA54\uBAA8 -->
+        <div class="dashboard-card" id="card-memo">
+          <div class="card-header">
+            <h2>\u{1F4DD} \uC720\uC800 \uBA54\uBAA8 \uBAA9\uB85D \uAD00\uB9AC</h2>
+            <p>\uB4F1\uB85D\uB41C \uBA54\uBAA8 \uBC30\uC9C0\uB97C \uB204\uB974\uBA74 \uB0B4\uC6A9\uC744 \uC989\uC2DC \uC218\uC815\uD558\uAC70\uB098 \uC0AD\uC81C\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.</p>
+          </div>
+          <div id="user-memo-dashboard-list" class="list-container" style="display:flex;flex-wrap:wrap;gap:8px;"></div>
+        </div>
 
-function openDashboardMemoPopup(memberId, memoEntry) {
-  const popup = document.getElementById("ext-dashboard-memo-edit-popup");
-  const input = document.getElementById("ext-dash-popup-input");
-  const saveBtn = document.getElementById("ext-dash-popup-save-btn");
-  const deleteBtn = document
-    .getElementById("ext-dashboard-memo-edit-popup")
-    .querySelector("#ext-dash-popup-delete-btn");
-  if (!popup || !input || !saveBtn || !deleteBtn) return;
+        <!-- \uAC1C\uB4DC\uB9BD\uCF58 \uB2E8\uC77C -->
+        <div class="dashboard-card" id="card-dogcon">
+          <div class="card-header">
+            <h2>\u{1F5BC}\uFE0F \uCC28\uB2E8\uB41C \uAC1C\uB4DC\uB9BD\uCF58 (\uB2E8\uC77C \uD30C\uC77C \uAE30\uC900)</h2>
+            <p>\uCC28\uB2E8\uB41C \uC774\uBAA8\uD2F0\uCF58\uC740 \uBCF8\uBB38\uC774\uB098 \uB313\uAE00\uCC3D\uC5D0 \uBCF4\uC774\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.</p>
+          </div>
+          <div id="dogcon-list" class="list-container"></div>
+        </div>
 
-  const currentText = memoEntry?.memo || "";
-  const currentColor = memoEntry?.color || "blue";
+        <!-- \uAC1C\uB4DC\uB9BD\uCF58 \uADF8\uB8F9 -->
+        <div class="dashboard-card" id="card-group">
+          <div class="card-header">
+            <h2>\u{1F4E6} \uCC28\uB2E8\uB41C \uAC1C\uB4DC\uB9BD\uCF58 (\uD328\uD0A4\uC9C0 \uADF8\uB8F9 \uAE30\uC900)</h2>
+            <p>\uD574\uB2F9 \uAC1C\uB4DC\uB9BD\uCF58 \uC804\uCCB4\uAC00 \uBCF8\uBB38\uC774\uB098 \uB313\uAE00\uCC3D\uC5D0 \uBCF4\uC774\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.</p>
+          </div>
+          <div id="dogcon-group-list" class="list-container"></div>
+        </div>
 
-  input.value = currentText;
-  popup.style.display = "flex";
-  setTimeout(() => input.focus(), 50);
-  const newSaveBtn = saveBtn.cloneNode(true);
-  const newDeleteBtn = deleteBtn.cloneNode(true);
-  saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
-  deleteBtn.parentNode.replaceChild(newDeleteBtn, deleteBtn);
+        <!-- \uB808\uC774\uC544\uC6C3 -->
+        <div class="dashboard-card" id="card-layout">
+          <div class="card-header">
+            <h2>\u{1F4D0} \uB808\uC774\uC544\uC6C3 \uC228\uAE40 \uBC0F \uD2B9\uC218 \uD544\uD130 \uC81C\uC5B4</h2>
+            <p>\uCCB4\uD06C\uB41C \uD56D\uBAA9\uC758 \uACBD\uC6B0 \uAC8C\uC2DC\uBB3C \uBAA9\uB85D\uC774\uB098 \uBA54\uC778\uC5D0\uC11C \uBCF4\uC774\uC9C0 \uC54A\uAC8C \uB429\uB2C8\uB2E4.</p>
+          </div>
+          <div class="setting-container">
+            <div class="options-checkbox-group">
+              <label class="checkbox-item"><input type="checkbox" id="hide-notice-cb"/><span>\uACF5\uC9C0\uC0AC\uD56D \uBAA9\uB85D \uAC00\uB9AC\uAE30</span></label>
+              <label class="checkbox-item"><input type="checkbox" id="hide-popular-cb"/><span>\uC778\uAE30\uAE00 \uB9AC\uC2A4\uD2B8 \uAC00\uB9AC\uAE30</span></label>
+              <label class="checkbox-item"><input type="checkbox" id="hide-sidebar-cb"/><span>\uC6B0\uCE21 \uBC30\uB108 \uC0AC\uC774\uB4DC\uBC14 \uAC00\uB9AC\uAE30</span></label>
+              <label class="checkbox-item"><input type="checkbox" id="compact-mode-cb"/><span>\uCEF4\uD329\uD2B8 \uB300\uD654\uBA74 \uBAA8\uB4DC \uC5F0\uB3D9</span></label>
+              <label class="checkbox-item"><input type="checkbox" id="disable-vote-cb"/><span>\uCD94\uCC9C \uBC0F \uBE44\uCD94\uCC9C \uC778\uD130\uD398\uC774\uC2A4 \uBE44\uD65C\uC131\uD654 (\uC544\uAE30 \uC774\uBAA8\uC9C0\uB85C \uBCC0\uACBD\uB428)</span></label>
+              <label class="checkbox-item"><input type="checkbox" id="preventYoutubeAlgorithm"/><span>\uC720\uD29C\uBE0C \uD50C\uB808\uC774\uC5B4 \uC784\uBCA0\uB4DC \uC54C\uACE0\uB9AC\uC998 \uBC29\uC5B4</span></label>
+              <label class="checkbox-item"><input type="checkbox" id="readability-mode-cb"/><span>\uAC00\uB3C5\uC131 \uBAA8\uB4DC (Pretendard JP \uD3F0\uD2B8\xB7\uC904\uAC04\uACA9\xB7\uC790\uAC04 \uCD5C\uC801\uD654)</span></label>
+              <label class="checkbox-item"><input type="checkbox" id="legacy-toolbar-cb"/><span>\uAC1C\uB4DC\uB9BD \uB3C4\uAD6C\uBAA8\uC74C \uC0AC\uC6A9 (\uC2E0\uD615 \uD035\uBC84\uD2BC \uD328\uB110 \uBE44\uD65C\uC131\uD654)</span></label>
+              <label class="checkbox-item"><input type="checkbox" id="hide-level-icon-cb"/><span>\uB808\uBCA8 \uC544\uC774\uCF58 \uC228\uAE30\uAE30</span></label>
+            </div>
 
-  newSaveBtn.addEventListener("click", () => {
-    const updatedText = input.value.trim();
-    if (!updatedText) {
-      newDeleteBtn.click();
-      return;
-    }
-    chrome.storage.local.get(["userMemos"], (res) => {
-      const arr = Array.isArray(res.userMemos) ? res.userMemos : [];
-      const dateStr = getTodayDateStr();
-      const filtered = arr.filter(
-        (m) => String(m.member_num) !== String(memberId),
-      );
-      filtered.push({
-        member_num: String(memberId),
-        memo: updatedText,
-        date: dateStr,
-        color: currentColor,
-      });
-      chrome.storage.local.set({ userMemos: filtered }, () => {
-        popup.style.display = "none";
-        loadDashboardUserMemos();
-        refreshActiveTabs();
-      });
-    });
-  });
-  newDeleteBtn.addEventListener("click", () => {
-    chrome.storage.local.get(["userMemos"], (res) => {
-      const arr = Array.isArray(res.userMemos) ? res.userMemos : [];
-      const filtered = arr.filter(
-        (m) => String(m.member_num) !== String(memberId),
-      );
-      chrome.storage.local.set({ userMemos: filtered }, () => {
-        popup.style.display = "none";
-        loadDashboardUserMemos();
-        refreshActiveTabs();
-      });
-    });
-  });
-}
+            <div style="margin-top:24px;padding-top:16px;border-top:1px dashed #cbd5e1;">
+              <h2>\u{1F6AB} \uC0AC\uC6A9\uC790 \uCC28\uB2E8 \uCC98\uB9AC \uBC29\uC2DD</h2>
+              <div class="block-method-container">
+                <label class="radio-item"><input type="radio" name="ext-block-method" id="block-method-remove" value="remove" checked/><span class="radio-mark"></span><span>\uBAA9\uB85D\uC5D0\uC11C \uC0AD\uC81C</span></label>
+                <label class="radio-item"><input type="radio" name="ext-block-method" id="block-method-blind" value="blind"/><span class="radio-mark"></span><span>\uB0B4\uC6A9\uC744 \uC228\uAE30\uACE0 \uBE14\uB77C\uC778\uB4DC \uCC98\uB9AC (\uD074\uB9AD\uD1A0\uAE00, \uB9C8\uC6B0\uC2A4 \uC624\uBC84 \uC5F4\uB78C)</span></label>
+                <label class="radio-item"><input type="radio" name="ext-block-method" id="block-method-badge" value="badge"/><span class="radio-mark"></span><span>\uAE00 \uC720\uC9C0\uD558\uACE0 \uBA54\uBAA8 \uD45C\uAE30</span></label>
+              </div>
+            </div>
 
-function applyCustomWidth() {
-  const inputEl = document.getElementById("content-width-input");
-  if (!inputEl || inputEl.disabled) return;
-  let widthVal = inputEl.value.trim();
-  if (widthVal && !isNaN(widthVal)) {
-    widthVal += "px";
-    inputEl.value = widthVal;
+            <div class="width-input-container" style="margin-top:24px;padding-top:16px;border-top:1px dashed #cbd5e1;">
+              <label style="font-size:13px;font-weight:700;display:block;margin-bottom:8px;color:var(--text-main);">\uBCF8\uBB38 \uB80C\uB354\uB9C1 \uAC00\uBCC0 \uB113\uC774 \uC124\uC815 (\uAE30\uBCF8\uAC12: 960px)</label>
+              <div style="display:flex;gap:8px;max-width:400px;">
+                <input type="text" id="content-width-input" placeholder="\uC608: 1200px \uB610\uB294 1400" style="padding:8px 12px;border:1px solid #cbd5e1;border-radius:var(--radius-md);font-size:13px;flex-grow:1;box-sizing:border-box;"/>
+                <button id="apply-width-btn" style="padding:8px 16px;font-size:13px;font-weight:700;background-color:#0284c7;color:white;border:none;border-radius:var(--radius-md);cursor:pointer;">\uC801\uC6A9</button>
+              </div>
+            </div>
+
+            <div style="margin-top:24px;padding-top:16px;border-top:1px dashed #cbd5e1;">
+              <h2>\u{1F9ED} \uC0C1\uB2E8 \uB124\uBE44\uAC8C\uC774\uC158 \uBA54\uB274 \uC228\uAE30\uAE30</h2>
+              <p style="font-size:13px;color:#64748b;margin-bottom:12px;">\uCCB4\uD06C \uD574\uC81C\uB41C \uBA54\uB274\uB294 \uC0C1\uB2E8 \uB124\uBE44\uAC8C\uC774\uC158\uC5D0\uC11C \uC228\uACA8\uC9D1\uB2C8\uB2E4. \uC0C1\uC704 \uBA54\uB274 \uCCB4\uD06C \uD574\uC81C \uC2DC \uD558\uC704 \uBA54\uB274 \uC804\uCCB4\uAC00 \uC228\uACA8\uC9D1\uB2C8\uB2E4.</p>
+              <div id="nav-menu-checkbox-group"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- \uC2DC\uC2A4\uD15C -->
+        <div class="dashboard-card" id="card-system">
+          <div class="card-header"><h2>\u{1F4BE} \uB370\uC774\uD130 \uBC31\uC5C5\uD558\uAE30</h2><p>\uCC28\uB2E8 \uB300\uC0C1\uACFC \uAE30\uBCF8 \uC124\uC815\uAC12\uC774 \uC800\uC7A5\uB429\uB2C8\uB2E4.</p></div>
+          <div class="backup-footer">
+            <button id="backup-btn" style="background-color:var(--md-primary);color:white;">\uC804\uCCB4 \uC124\uC815 \uB0B4\uBCF4\uB0B4\uAE30 (.json)</button>
+          </div>
+          <div class="card-header" style="margin-top:2rem;padding-top:1.5rem;border-top:1px dashed #e2e8f0;">
+            <h2>\u{1F4BE} \uB370\uC774\uD130 \uBCF5\uC6D0\uD558\uAE30</h2><p>\uAE30\uC874 \uBC31\uC5C5(.json) \uD30C\uC77C\uC744 \uBD88\uB7EC\uC640 \uC6D0\uC0C1\uBCF5\uAD6C\uD569\uB2C8\uB2E4.</p>
+          </div>
+          <div class="backup-footer">
+            <button id="restore-btn" style="background-color:#059669;color:white;">\uC804\uCCB4 \uC124\uC815 \uAC00\uC838\uC624\uAE30 (.json)</button>
+          </div>
+          <input type="file" id="file-input" accept=".json" style="display:none;"/>
+          <div class="card-header" style="margin-top:2rem;padding-top:1.5rem;border-top:1px dashed #e2e8f0;">
+            <h2>\u{1F517} Dogdrip++ \uB370\uC774\uD130 \uAC00\uC838\uC624\uAE30</h2><p>\uD0C0 \uD655\uC7A5\uD504\uB85C\uADF8\uB7A8(Dogdrip++)\uC758 \uCC28\uB2E8 \uC0AC\uC6A9\uC790 \uBC0F \uD0A4\uC6CC\uB4DC \uB370\uC774\uD130\uB9CC \uBCF5\uC6D0\uD569\uB2C8\uB2E4.</p>
+          </div>
+          <div class="backup-footer">
+            <button id="ext-dogdrip-plus-plus-restore-btn" style="background-color:#7c3aed;color:white;">Dogdrip++ \uB370\uC774\uD130 \uAC00\uC838\uC624\uAE30 (.json)</button>
+          </div>
+          <input type="file" id="ext-plus-plus-file-input" accept=".json" style="display:none;"/>
+        </div>
+
+        <!-- \uD035\uD328\uB110 \uBC84\uD2BC \uC124\uC815 -->
+        <div class="dashboard-card" id="card-quickpanel">
+          <div class="card-header">
+            <h2>\u26A1 \uD035\uD328\uB110 \uBC84\uD2BC \uC124\uC815</h2>
+            <p>\uC6B0\uCE21 \uD035\uBC84\uD2BC \uD328\uB110\uC5D0 \uD45C\uC2DC\uD560 \uBC84\uD2BC\uC744 \uC120\uD0DD\uD558\uC138\uC694. <span style="color:#64748b;font-size:12px;">\u{1F4CC} \uD45C\uC2DC\uB294 \uAC8C\uC2DC\uAE00 \uD398\uC774\uC9C0\uC5D0\uC11C\uB9CC \uB098\uD0C0\uB098\uB294 \uBC84\uD2BC\uC785\uB2C8\uB2E4.</span></p>
+          </div>
+          <div id="quickpanel-button-group" class="options-checkbox-group"></div>
+        </div>
+
+        <!-- \uAC1C\uBC1C\uC790 \uC815\uBCF4 -->
+        <div class="dashboard-card" id="card-about">
+          <div class="card-header"><h2>\u{1F4A1} \uAC1C\uB4DC\uB9BD Plus + \uC5D0 \uB300\uD558\uC5EC</h2></div>
+          <div style="padding:8px 32px;line-height:1.85;color:#374151;font-size:13.5px;">
+            <p>\uAC1C\uB4DC\uB9BD Plus + \uB294 \uB354 \uB9CE\uC740 \uBD84\uB4E4\uC774 \uAC1C\uB4DC\uB9BD\uB137\uC744 \uD3B8\uB9AC\uD558\uACE0 \uCF8C\uC801\uD558\uAC8C \uC774\uC6A9\uD560 \uC218 \uC788\uB3C4\uB85D \uB9CC\uB4E4\uC5B4\uC9C4 \uD655\uC7A5\uD504\uB85C\uADF8\uB7A8\uC785\uB2C8\uB2E4.</p>
+            <p>\uC720\uC800\xB7\uD0A4\uC6CC\uB4DC \uCC28\uB2E8\uBD80\uD130 \uB808\uC774\uC544\uC6C3 \uCEE4\uC2A4\uD130\uB9C8\uC774\uC9D5\uAE4C\uC9C0, \uBCC4\uB3C4\uC758 \uD655\uC7A5\uD504\uB85C\uADF8\uB7A8\uC744 \uC5EC\uB7EC \uAC1C \uC124\uCE58\uD560 \uD544\uC694 \uC5C6\uC774 \uC774 \uD558\uB098\uB85C \uD574\uACB0\uD560 \uC218 \uC788\uB3C4\uB85D \uD558\uB294 \uAC83\uC774 \uBAA9\uD45C\uC785\uB2C8\uB2E4.</p>
+            <p>\uC720\uC6A9\uD558\uAC8C \uC0AC\uC6A9\uD574 \uC8FC\uC154\uC11C \uAC10\uC0AC\uD569\uB2C8\uB2E4.</p>
+            <div style="padding-top:16px;border-top:1px dashed #e2e8f0;font-size:13px;color:#64748b;">
+              \uAC1C\uBC1C\uC790: <a href="https://2er0.io" target="_blank" style="font-weight:700;color:#1e293b;text-decoration:none;">2ER0</a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- \uBA54\uBAA8 \uC218\uC815 \uD31D\uC5C5 -->
+    <div id="ext-dashboard-memo-edit-popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);align-items:center;justify-content:center;z-index:9999;">
+      <div style="background:#fff;padding:20px;border-radius:var(--radius-md);width:320px;box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+        <p style="margin-top:0;font-weight:bold;font-size:13px;color:var(--text-main);" id="ext-dash-popup-title">\u{1F4DD} \uBA54\uBAA8 \uC218\uC815</p>
+        <input type="text" id="ext-dash-popup-input" style="width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;box-sizing:border-box;margin-bottom:12px;"/>
+        <div style="display:flex;gap:6px;justify-content:flex-end;">
+          <button id="ext-dash-popup-save-btn" style="padding:6px 12px;background:#3b82f6;color:#fff;border:none;border-radius:4px;font-size:12px;font-weight:bold;cursor:pointer;">\uC800\uC7A5</button>
+          <button id="ext-dash-popup-delete-btn" style="padding:6px 12px;background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;border-radius:4px;font-size:12px;font-weight:bold;cursor:pointer;">\uC0AD\uC81C</button>
+          <button id="ext-dash-popup-cancel-btn" style="padding:6px 12px;background:#e5e7eb;color:#4b5563;border:none;border-radius:4px;font-size:12px;font-weight:bold;cursor:pointer;">\uCDE8\uC18C</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- \uD0A4\uC6CC\uB4DC \uC218\uC815 \uD31D\uC5C5 -->
+    <div id="ext-dashboard-keyword-edit-popup" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.3);align-items:center;justify-content:center;z-index:10000;">
+      <div style="background:#fff;padding:20px;border-radius:12px;width:340px;box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+        <p style="margin-top:0;font-weight:bold;font-size:14px;color:#111827;">\u2699\uFE0F \uCC28\uB2E8 \uD0A4\uC6CC\uB4DC \uC870\uAC74 \uC124\uC815 \uC218\uC815</p>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;font-size:11px;font-weight:bold;color:#64748b;margin-bottom:4px;">\uD0A4\uC6CC\uB4DC\uBA85</label>
+          <input type="text" id="ext-keyword-popup-word-input" style="width:100%;padding:6px 10px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;box-sizing:border-box;"/>
+        </div>
+        <div style="margin-bottom:12px;">
+          <label style="display:block;font-size:11px;font-weight:bold;color:#64748b;margin-bottom:4px;">\uB9E4\uCE6D \uC870\uAC74</label>
+          <select id="ext-keyword-popup-method-select" style="width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;">
+            <option value="includes">\uD3EC\uD568</option>
+            <option value="starts">\uC2DC\uC791</option>
+          </select>
+        </div>
+        <div style="margin-bottom:18px;">
+          <label style="display:block;font-size:11px;font-weight:bold;color:#64748b;margin-bottom:4px;">\uCC28\uB2E8 \uB300\uC0C1</label>
+          <select id="ext-keyword-popup-target-select" style="width:100%;padding:6px;border:1px solid #cbd5e1;border-radius:6px;font-size:13px;">
+            <option value="all">\uC804\uCCB4(\uB313\uAE00, \uC81C\uBAA9)</option>
+            <option value="comments">\uB313\uAE00</option>
+            <option value="posts">\uC81C\uBAA9</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:6px;justify-content:flex-end;">
+          <button id="ext-keyword-popup-save-btn" style="padding:6px 14px;background:#3b82f6;color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:bold;cursor:pointer;">\uC800\uC7A5</button>
+          <button id="ext-keyword-popup-cancel-btn" style="padding:6px 14px;background:#e5e7eb;color:#4b5563;border:none;border-radius:6px;font-size:12px;font-weight:bold;cursor:pointer;">\uCDE8\uC18C</button>
+        </div>
+      </div>
+    </div>
+  `)}document.addEventListener("DOMContentLoaded",()=>{if(C(),typeof chrome<"u"&&chrome.runtime?.getManifest){let o=document.getElementById("ext-version");o&&(o.innerText="v "+chrome.runtime.getManifest().version)}typeof window.execFilterVersionCheck=="function"&&window.execFilterVersionCheck(),p("keywords","keyword-list"),p("blocked_users","nickname-list"),p("blockedDogcons","dogcon-list"),p("blockedDogconGroups","dogcon-group-list"),f(),chrome.storage.local.get(["hideNotice","hidePopular","hideSidebar","compactMode","disableVote","preventYoutubeAlgorithm","contentWidth","blockMethod","readabilityMode","legacyToolbar","hiddenMenus"],o=>{let l=o.compactMode||!1;b("hide-notice-cb",o.hideNotice),b("hide-popular-cb",o.hidePopular),b("hide-sidebar-cb",o.hideSidebar),b("compact-mode-cb",l),b("disable-vote-cb",o.disableVote),b("preventYoutubeAlgorithm",o.preventYoutubeAlgorithm),b("readability-mode-cb",o.readabilityMode),b("legacy-toolbar-cb",o.legacyToolbar),b("hide-level-icon-cb",o.hideLevelIcon);let c=document.getElementById("content-width-input");c&&(c.value=o.contentWidth||"");let r=o.blockMethod||"remove";b(r==="blind"?"block-method-blind":r==="badge"?"block-method-badge":"block-method-remove",!0),L(l),_();let u=o.hiddenMenus||[],h=o.hiddenSubMenus||[];G(u,h)}),y("hide-notice-cb","hideNotice"),y("hide-popular-cb","hidePopular"),y("hide-sidebar-cb","hideSidebar"),y("disable-vote-cb","disableVote"),y("preventYoutubeAlgorithm","preventYoutubeAlgorithm"),y("readability-mode-cb","readabilityMode"),y("legacy-toolbar-cb","legacyToolbar"),y("hide-level-icon-cb","hideLevelIcon");let e=document.getElementById("compact-mode-cb");e&&e.addEventListener("change",o=>{let l=o.target.checked;L(l),N("compactMode",l)}),["block-method-remove","block-method-blind","block-method-badge"].forEach(o=>{document.getElementById(o)?.addEventListener("change",B)}),document.getElementById("apply-width-btn")?.addEventListener("click",I),document.getElementById("content-width-input")?.addEventListener("keypress",o=>{o.key==="Enter"&&I()});let n=document.querySelectorAll(".nav-item"),i=document.getElementById("main-title");n.forEach(o=>{o.addEventListener("click",()=>{n.forEach(c=>c.classList.remove("active")),o.classList.add("active"),i&&(i.innerText=o.innerText.replace(/[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDC00-\uDFFF]/g,"").trim());let l=o.getAttribute("data-target");switch(document.querySelectorAll(".dashboard-card").forEach(c=>{c.classList.toggle("active",c.id===l)}),l){case"card-keyword":p("keywords","keyword-list");break;case"card-nickname":p("blocked_users","nickname-list");break;case"card-memo":f();break;case"card-dogcon":p("blockedDogcons","dogcon-list");break;case"card-group":p("blockedDogconGroups","dogcon-group-list");break;case"card-quickpanel":_();break}})}),document.getElementById("ext-dash-popup-cancel-btn")?.addEventListener("click",()=>{let o=document.getElementById("ext-dashboard-memo-edit-popup");o&&(o.style.display="none")});let a=document.getElementById("backup-btn");a&&a.addEventListener("click",o=>{o.preventDefault(),O()});let t=document.getElementById("restore-btn"),d=document.getElementById("file-input");t&&d&&(t.addEventListener("click",o=>{o.preventDefault(),d.click()}),d.addEventListener("change",D));let s=document.getElementById("ext-dogdrip-plus-plus-restore-btn"),m=document.getElementById("ext-plus-plus-file-input");s&&m&&(s.addEventListener("click",o=>{o.preventDefault(),m.click()}),m.addEventListener("change",H)),document.getElementById("ext-keyword-search-input")?.addEventListener("input",()=>p("keywords","keyword-list")),document.getElementById("ext-user-search-input")?.addEventListener("input",()=>p("blocked_users","nickname-list")),document.getElementById("ext-keyword-popup-cancel-btn")?.addEventListener("click",()=>{let o=document.getElementById("ext-dashboard-keyword-edit-popup");o&&(o.style.display="none")}),document.getElementById("ext-new-keyword-add-btn")?.addEventListener("click",z),document.getElementById("ext-new-keyword-input")?.addEventListener("keypress",o=>{o.key==="Enter"&&document.getElementById("ext-new-keyword-add-btn")?.click()})});function b(e,n){let i=document.getElementById(e);i&&(i.checked=!!n)}function y(e,n){document.getElementById(e)?.addEventListener("change",i=>N(n,i.target.checked))}function x(){let e=new Date;return`${e.getFullYear()}/${String(e.getMonth()+1).padStart(2,"0")}/${String(e.getDate()).padStart(2,"0")}`}function B(e){e.target.checked&&chrome.storage.local.set({blockMethod:e.target.value},()=>g())}function N(e,n){chrome.storage.local.set({[e]:n},()=>g())}function p(e,n){chrome.storage.local.get([e],i=>{let a=i[e]||[];if(e==="keywords"){let t=document.getElementById("ext-keyword-search-input")?.value.trim().toLowerCase();t&&(a=a.filter(d=>(d.word||d.keyword||"").toLowerCase().includes(t)))}else if(e==="blocked_users"){let t=document.getElementById("ext-user-search-input")?.value.trim().toLowerCase();t&&(a=a.filter(d=>(d.memo||"").toLowerCase().includes(t)||String(d.member_num||"").includes(t)))}S(a,e,n)})}function q(e,n,i){chrome.storage.local.get([e],a=>{let t=a[e]||[];e==="blockedDogcons"||e==="blockedDogconGroups"?t=t.filter(d=>d.id!==n.id):e==="blocked_users"?t=t.filter(d=>String(d.member_num)!==String(n.member_num)):e==="keywords"?t=t.filter(d=>d.word!==n.word):t=t.filter(d=>d!==n),chrome.storage.local.set({[e]:t},()=>{S(t,e,i),g()})})}function S(e,n,i){let a=document.getElementById(i);if(a){if(a.innerHTML="",e.length===0){a.innerHTML='<span style="color:#94a3b8;font-size:13px;">\uCC28\uB2E8 \uB4F1\uB85D\uB41C \uB0B4\uC5ED\uC774 \uD604\uC7AC \uBE44\uC5B4\uC788\uC2B5\uB2C8\uB2E4.</span>';return}e.forEach(t=>{let d=document.createElement("span");if(d.className="badge",n==="blockedDogcons"||n==="blockedDogconGroups")d.innerText=t.name,d.title=`ID: ${t.id}`;else if(n==="blocked_users")d.innerHTML=`<div>
+        <p style="margin:0;font-weight:bold;">\u{1F464} \uBC88\uD638: ${t.member_num}</p>
+        <p style="margin:0;margin-top:2px;font-size:0.75rem;color:#6b7280;">\uB4F1\uB85D\uC77C: ${t.date||x()}</p>
+        ${t.memo?`<p style="margin:0;margin-top:2px;font-size:0.75rem;color:#ef4444;">\uC0AC\uC720: ${t.memo}</p>`:""}
+      </div>`,d.title=`\uD68C\uC6D0\uACE0\uC720ID: ${t.member_num}`;else if(n==="keywords"){let m=t.word||t.keyword,o=t.method==="starts"?"\uC2DC\uC791\uB2E8\uC5B4":"\uD3EC\uD568",l=t.target==="comments"||t.target==="comment"?"\uB313\uAE00":t.target==="posts"||t.target==="post"?"\uAC8C\uC2DC\uAE00":"\uC804\uCCB4(\uAC8C\uC2DC\uAE00, \uB313\uAE00)";d.innerHTML=`<div style="cursor:pointer;" class="ext-keyword-clickable-item">
+        <p style="margin:0;font-weight:bold;">\u2328\uFE0F ${m}</p>
+        <p style="margin:0;margin-top:2px;font-size:0.72rem;color:#2563eb;">\uC870\uAC74: [${l}] [${o}] \uC2DC</p>
+      </div>`,d.querySelector(".ext-keyword-clickable-item").addEventListener("click",()=>P(t))}else d.innerText=t;let s=document.createElement("button");s.innerText="\xD7",s.addEventListener("click",()=>q(n,t,i)),d.appendChild(s),a.appendChild(d)})}}function f(){let e=document.getElementById("user-memo-dashboard-list");e&&(e.innerHTML="",chrome.storage.local.get(["userMemos"],n=>{let i=Array.isArray(n.userMemos)?n.userMemos:[];if(i.length===0){e.innerHTML='<span style="color:#94a3b8;font-size:13px;">\uB4F1\uB85D\uB41C \uC720\uC800 \uBA54\uBAA8 \uB0B4\uC5ED\uC774 \uD604\uC7AC \uBE44\uC5B4\uC788\uC2B5\uB2C8\uB2E4.</span>';return}i.forEach(a=>{let t=String(a.member_num),d=document.createElement("span");d.className=`ext-user-memo-badge ext-memo-${a.color||"blue"}`,d.style.cssText="padding:6px 12px;font-size:12px;border-radius:6px;cursor:pointer;margin:4px;",d.innerText=`${a.memo||""} (ID: ${t}${a.date?` \xB7 ${a.date}`:""})`,d.title="\uD074\uB9AD\uD558\uC5EC \uBA54\uBAA8 \uB0B4\uC6A9 \uC218\uC815 \uBC0F \uC0AD\uC81C",d.addEventListener("click",()=>A(t,a)),e.appendChild(d)})}))}function A(e,n){let i=document.getElementById("ext-dashboard-memo-edit-popup"),a=document.getElementById("ext-dash-popup-input"),t=document.getElementById("ext-dash-popup-save-btn"),d=i?.querySelector("#ext-dash-popup-delete-btn");if(!i||!a||!t||!d)return;a.value=n?.memo||"",i.style.display="flex",setTimeout(()=>a.focus(),50);let s=t.cloneNode(!0),m=d.cloneNode(!0);t.parentNode.replaceChild(s,t),d.parentNode.replaceChild(m,d),s.addEventListener("click",()=>{let o=a.value.trim();if(!o){m.click();return}chrome.storage.local.get(["userMemos"],l=>{let r=(Array.isArray(l.userMemos)?l.userMemos:[]).filter(u=>String(u.member_num)!==e);r.push({member_num:e,memo:o,date:x(),color:n?.color||"blue"}),chrome.storage.local.set({userMemos:r},()=>{i.style.display="none",f(),g()})})}),m.addEventListener("click",()=>{chrome.storage.local.get(["userMemos"],o=>{let l=(Array.isArray(o.userMemos)?o.userMemos:[]).filter(c=>String(c.member_num)!==e);chrome.storage.local.set({userMemos:l},()=>{i.style.display="none",f(),g()})})})}function I(){let e=document.getElementById("content-width-input");if(!e||e.disabled)return;let n=e.value.trim();n&&!isNaN(Number(n))&&(n+="px",e.value=n),chrome.storage.local.set({contentWidth:n},()=>g())}function L(e){let n=document.getElementById("content-width-input"),i=document.getElementById("apply-width-btn");!n||!i||(e?(n.disabled=!1,i.disabled=!1,n.style.opacity="1",n.style.cursor="text",i.style.opacity="1",i.style.cursor="pointer",chrome.storage.local.get(["contentWidth"],a=>{n.value=a.contentWidth||""})):(n.value="960",n.disabled=!0,i.disabled=!0,n.style.opacity="0.5",n.style.cursor="not-allowed",i.style.opacity="0.5",i.style.cursor="not-allowed",chrome.storage.local.set({contentWidth:""})))}function g(){chrome.tabs.query({url:"*://*.dogdrip.net/*"},e=>{e.forEach(n=>chrome.tabs.reload(n.id))})}function O(){chrome.storage.local.get(["keywords","blocked_users","blockedDogcons","blockedDogconGroups","hideNotice","hidePopular","hideSidebar","compactMode","disableVote","preventYoutubeAlgorithm","contentWidth","blockMethod","userMemos","hiddenMenus"],e=>{let n=new Blob([JSON.stringify(e,null,2)],{type:"application/json"}),i=URL.createObjectURL(n),a=document.createElement("a");a.href=i,a.download=`dogdrip_plus_master_backup_${new Date().toISOString().slice(0,10)}.json`,document.body.appendChild(a),a.click(),document.body.removeChild(a),URL.revokeObjectURL(i)})}function D(e){let n=e.target.files?.[0];if(!n)return;let i=new FileReader;i.onload=a=>{try{let t=JSON.parse(a.target.result),d=x(),s=(Array.isArray(t.keywords)?t.keywords:[]).map(r=>typeof r=="string"?{date:d,method:"includes",target:"all",word:r}:{date:r.date||d,method:r.method||"includes",target:r.target||"all",word:r.word||r.keyword}),o=(Array.isArray(t.nicknames)?t.nicknames:Array.isArray(t.blocked_users)?t.blocked_users:[]).map(r=>typeof r=="string"&&r.includes(":")?{date:d,member_num:r.split(":")[0].trim(),memo:r.split(":")[2]?.trim()||""}:{date:r.date||d,member_num:r.member_num,memo:r.memo||""}),l=t.userMemos,c=[];Array.isArray(l)?c=l.map(r=>({member_num:String(r.member_num),memo:r.memo||"",date:r.date||d,color:r.color||"blue"})):l&&typeof l=="object"&&(c=Object.entries(l).map(([r,u])=>{let h=u,E="blue";if(typeof u=="string"){let v=u.lastIndexOf(":");v!==-1&&(h=u.slice(0,v),E=u.slice(v+1)||"blue")}return{member_num:r,memo:h||"",date:d,color:E}})),chrome.storage.local.get(["blockedDogcons","blockedDogconGroups","hideNotice","hidePopular","hideSidebar","compactMode","disableVote","preventYoutubeAlgorithm","contentWidth","blockMethod","hiddenMenus"],r=>{chrome.storage.local.set({keywords:s,blocked_users:o,blockedDogcons:r.blockedDogcons||[],blockedDogconGroups:r.blockedDogconGroups||[],hideNotice:!!r.hideNotice,hidePopular:!!r.hidePopular,hideSidebar:!!r.hideSidebar,compactMode:!!r.compactMode,disableVote:!!r.disableVote,preventYoutubeAlgorithm:!!r.preventYoutubeAlgorithm,contentWidth:r.contentWidth||"",blockMethod:r.blockMethod||"remove",userMemos:c,hiddenMenus:t.hiddenMenus||r.hiddenMenus||[]},()=>{alert("\u{1F389} \uC21C\uC815 \uBC31\uC5C5 \uB370\uC774\uD130 \uBCF5\uC6D0\uC744 \uC644\uB8CC\uD588\uC2B5\uB2C8\uB2E4!"),p("keywords","keyword-list"),p("blocked_users","nickname-list"),p("blockedDogcons","dogcon-list"),p("blockedDogconGroups","dogcon-group-list"),f(),e.target.value="",g()})})}catch{alert("\u274C \uD30C\uC77C \uBCC0\uD658 \uADDC\uACA9 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4."),e.target.value=""}},i.readAsText(n)}function H(e){let n=e.target.files?.[0];if(!n)return;let i=new FileReader;i.onload=a=>{try{let t=JSON.parse(a.target.result),d=x(),s=(Array.isArray(t.blocked_members)?t.blocked_members:[]).map(o=>({date:o.date||d,member_num:String(o.member_num).trim(),memo:o.memo||""})),m=(Array.isArray(t.keywords)?t.keywords:[]).map(o=>({date:o.date||d,method:o.method||"includes",target:o.target||"all",word:o.keyword}));chrome.storage.local.get(["blockedDogcons","blockedDogconGroups","hideNotice","hidePopular","hideSidebar","compactMode","disableVote","preventYoutubeAlgorithm","contentWidth","blockMethod","userMemos","hiddenMenus"],o=>{chrome.runtime?.lastError||chrome.storage.local.set({keywords:m,blocked_users:s,blockedDogcons:o.blockedDogcons||[],blockedDogconGroups:o.blockedDogconGroups||[],hideNotice:!!o.hideNotice,hidePopular:!!o.hidePopular,hideSidebar:!!o.hideSidebar,compactMode:!!o.compactMode,disableVote:!!o.disableVote,preventYoutubeAlgorithm:!!o.preventYoutubeAlgorithm,contentWidth:o.contentWidth||"",blockMethod:o.blockMethod||"remove",userMemos:Array.isArray(o.userMemos)?o.userMemos:[],hiddenMenus:o.hiddenMenus||[]},()=>{alert("\u{1F389} Dogdrip++\uC758 \uCC28\uB2E8 \uC720\uC800 \uBC0F \uC870\uAC74 \uD0A4\uC6CC\uB4DC \uB370\uC774\uD130\uB97C \uC131\uACF5\uC801\uC73C\uB85C \uBCC0\uD658\uD558\uC5EC \uC774\uC2DD\uD588\uC2B5\uB2C8\uB2E4!"),p("keywords","keyword-list"),p("blocked_users","nickname-list"),p("blockedDogcons","dogcon-list"),p("blockedDogconGroups","dogcon-group-list"),f(),e.target.value="",g()})})}catch{alert("\u274C \uD0C0\uC0AC \uBC31\uC5C5 JSON \uD30C\uC77C \uD30C\uC2F1 \uC608\uC678\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4."),e.target.value=""}},i.readAsText(n)}function z(){let e=document.getElementById("ext-new-keyword-input"),n=document.getElementById("ext-new-keyword-method"),i=document.getElementById("ext-new-keyword-target");if(!e)return;let a=e.value.trim();if(!a){e.focus();return}chrome.storage.local.get(["keywords"],t=>{let d=t.keywords||[];if(d.some(s=>(s.word||s.keyword||"")===a)){alert(`"${a}" \uD0A4\uC6CC\uB4DC\uB294 \uC774\uBBF8 \uB4F1\uB85D\uB418\uC5B4 \uC788\uC2B5\uB2C8\uB2E4.`);return}d.push({date:x(),method:n?.value||"includes",target:i?.value||"all",word:a}),chrome.storage.local.set({keywords:d},()=>{e.value="",p("keywords","keyword-list"),g()})})}function P(e){let n=document.getElementById("ext-dashboard-keyword-edit-popup"),i=document.getElementById("ext-keyword-popup-word-input"),a=document.getElementById("ext-keyword-popup-method-select"),t=document.getElementById("ext-keyword-popup-target-select"),d=document.getElementById("ext-keyword-popup-save-btn");if(!n||!i||!a||!t||!d)return;let s=e.word||e.keyword||"";i.value=s,a.value=e.method||"includes";let m=e.target||"all";t.value=m==="post"?"posts":m==="comment"?"comments":m,n.style.display="flex",setTimeout(()=>i.focus(),50);let o=d.cloneNode(!0);d.parentNode.replaceChild(o,d),o.addEventListener("click",()=>{let l=i.value.trim();if(!l){alert("\u274C \uD0A4\uC6CC\uB4DC\uBA85\uC740 \uACF5\uBC31\uC73C\uB85C \uC124\uC815\uD560 \uC218 \uC5C6\uC2B5\uB2C8\uB2E4.");return}chrome.storage.local.get(["keywords"],c=>{let r=(c.keywords||[]).map(u=>(u.word||u.keyword||"")===s?{date:u.date||x(),method:a.value,target:t.value,word:l}:u);chrome.storage.local.set({keywords:r},()=>{n.style.display="none",p("keywords","keyword-list"),g()})})})}function _(){let e=document.getElementById("quickpanel-button-group");e&&chrome.storage.local.get(["quickPanelButtons"],n=>{let i=n.quickPanelButtons??M;e.innerHTML="",k.forEach(a=>{let t=document.createElement("label");t.className="checkbox-item";let d=document.createElement("input");d.type="checkbox",d.dataset.btnId=a.id,d.checked=i.includes(a.id);let s=document.createElement("span");s.textContent=a.label+(a.postOnly?"  \u{1F4CC}":""),t.appendChild(d),t.appendChild(s),e.appendChild(t),d.addEventListener("change",F)})})}function F(){let e=[];document.querySelectorAll("#quickpanel-button-group input[type=checkbox]").forEach(n=>{n.checked&&n.dataset.btnId&&e.push(n.dataset.btnId)}),chrome.storage.local.set({quickPanelButtons:e},()=>g())}function G(e,n){let i=document.getElementById("nav-menu-checkbox-group");i&&(i.innerHTML="",w.forEach(a=>{let t=document.createElement("div");t.style.cssText="margin-bottom:8px;";let d=document.createElement("label");d.className="checkbox-item",d.style.cssText="font-weight:700;";let s=document.createElement("input");s.type="checkbox",s.className="nav-menu-cb",s.dataset.mid=a.mid,s.checked=!e.includes(a.mid);let m=document.createElement("span");m.textContent=a.menuName,d.appendChild(s),d.appendChild(m),t.appendChild(d);let o=a.menuItems.length>1||a.menuItems.length===1&&a.menuItems[0].mid!==a.mid,l=document.createElement("div");l.style.cssText="margin-left:20px;margin-top:4px;display:flex;flex-wrap:wrap;gap:4px 16px;",o&&(a.menuItems.forEach(c=>{let r=document.createElement("label");r.className="checkbox-item",r.style.cssText="font-size:12px;color:#475569;";let u=document.createElement("input");u.type="checkbox",u.className="nav-submenu-cb",u.dataset.mid=c.mid,u.dataset.parentMid=a.mid,u.checked=!e.includes(a.mid)&&!n.includes(c.mid),u.disabled=e.includes(a.mid);let h=document.createElement("span");h.textContent=c.subMenuName,r.appendChild(u),r.appendChild(h),l.appendChild(r)}),t.appendChild(l)),i.appendChild(t),s.addEventListener("change",()=>{l.querySelectorAll(".nav-submenu-cb").forEach(c=>{c.disabled=!s.checked,s.checked||(c.checked=!1)}),T()}),l.querySelectorAll(".nav-submenu-cb").forEach(c=>{c.addEventListener("change",T)})}))}function T(){let e=[],n=[];document.querySelectorAll(".nav-menu-cb").forEach(i=>{!i.checked&&i.dataset.mid&&e.push(i.dataset.mid)}),document.querySelectorAll(".nav-submenu-cb").forEach(i=>{!i.checked&&i.dataset.mid&&n.push(i.dataset.mid)}),chrome.storage.local.set({hiddenMenus:e,hiddenSubMenus:n},()=>g())}document.addEventListener("keydown",e=>{e.key!=="Escape"&&e.key!=="Esc"||["ext-dashboard-keyword-edit-popup","ext-dashboard-memo-edit-popup"].forEach(n=>{let i=document.getElementById(n);if(!i)return;let a=window.getComputedStyle(i);if(a.display==="flex"||a.display==="block"||i.classList.contains("active")){let t=i.querySelector(".btn-secondary, button[id*='cancel'], button[id*='close'], .modal-close");t?t.click():(i.style.display="none",i.classList.remove("active","show"))}})});})();
+
+// ── [sideload] 버전 체크 (build.mjs가 append) ──────────
+(function() {
+  const REMOTE_VERSION_URL =
+    "https://raw.githubusercontent.com/z3ro2201/dogdrip-plus/refs/heads/main/version.txt";
+
+  function getVersionWeightNumber(versionStr) {
+    if (!versionStr) return 0;
+    const parts = versionStr.replace(/[vV\s]/g, "").split(".").map(Number);
+    return (parts[0] || 0) * 1000000 + (parts[1] || 0) * 1000 + (parts[2] || 0);
   }
-  chrome.storage.local.set({ contentWidth: widthVal }, () => {
-    refreshActiveTabs();
-  });
-}
 
-function toggleWidthFormState(isCompactActive) {
-  const inputEl = document.getElementById("content-width-input");
-  const btnEl = document.getElementById("apply-width-btn");
-  if (!inputEl || !btnEl) return;
-  if (!isCompactActive) {
-    inputEl.value = "960";
-    inputEl.disabled = true;
-    btnEl.disabled = true;
-    inputEl.style.opacity = "0.5";
-    inputEl.style.cursor = "not-allowed";
-    btnEl.style.opacity = "0.5";
-    btnEl.style.cursor = "not-allowed";
-    chrome.storage.local.set({ contentWidth: "" });
-  } else {
-    inputEl.disabled = false;
-    btnEl.disabled = false;
-    inputEl.style.opacity = "1";
-    inputEl.style.cursor = "text";
-    btnEl.style.opacity = "1";
-    btnEl.style.cursor = "pointer";
-    chrome.storage.local.get(["contentWidth"], (res) => {
-      inputEl.value = res.contentWidth || "";
-    });
-  }
-}
+  window.execFilterVersionCheck = function() {
+    const manifestData = chrome.runtime.getManifest();
+    const currentVersion = manifestData.version;
 
-function refreshActiveTabs() {
-  chrome.tabs.query({ url: "*://*.dogdrip.net/*" }, (tabs) => {
-    tabs.forEach((tab) => chrome.tabs.reload(tab.id));
-  });
-}
+    const versionTagEl = document.getElementById("ext-version");
+    if (versionTagEl) versionTagEl.innerText = "v " + currentVersion;
 
-function backupSettings() {
-  chrome.storage.local.get(
-    [
-      "keywords",
-      "blocked_users",
-      "blockedDogcons",
-      "blockedDogconGroups",
-      "hideNotice",
-      "hidePopular",
-      "hideSidebar",
-      "compactMode",
-      "disableVote",
-      "preventYoutubeAlgorithm",
-      "contentWidth",
-      "blockMethod",
-      "userMemos",
-    ],
-    (result) => {
-      const dataStr = JSON.stringify(result, null, 2);
-      const blob = new Blob([dataStr], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `dogdrip_plus_master_backup_${new Date().toISOString().slice(0, 10)}.json`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    },
-  );
-}
-
-function restoreSettings(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    try {
-      const importedData = JSON.parse(e.target.result);
-      let rawKeywords = Array.isArray(importedData.keywords)
-        ? importedData.keywords
-        : [];
-      let rawNicknames = Array.isArray(importedData.nicknames)
-        ? importedData.nicknames
-        : Array.isArray(importedData.blocked_users)
-          ? importedData.blocked_users
-          : [];
-
-      const importDate = getTodayDateStr();
-
-      const keywords = rawKeywords.map((item) => {
-        if (typeof item === "string") {
-          return {
-            date: importDate,
-            method: "includes",
-            target: "all",
-            word: item,
-          };
+    fetch(REMOTE_VERSION_URL)
+      .then((response) => {
+        if (!response.ok) throw new Error("네트워크 응답 불량");
+        return response.text();
+      })
+      .then((remoteRawText) => {
+        const remoteVersionStr = remoteRawText.trim();
+        if (getVersionWeightNumber(remoteVersionStr) > getVersionWeightNumber(currentVersion)) {
+          const updateLinkEl = document.getElementById("check-update-link");
+          if (updateLinkEl) {
+            updateLinkEl.innerText = "🔥 새 버전 발견 (" + remoteVersionStr + ") 업데이트 하러가기";
+            updateLinkEl.style.color = "#ea580c";
+            updateLinkEl.style.fontWeight = "800";
+          }
         }
-        return {
-          date: item.date || importDate,
-          method: item.method || "includes",
-          target: item.target || "all",
-          word: item.word || item.keyword,
-        };
-      });
-
-      const blocked_users = rawNicknames.map((item) => {
-        if (typeof item === "string" && item.includes(":")) {
-          const parts = item.split(":");
-          return {
-            date: importDate,
-            member_num: parts[0].trim(),
-            memo: parts[2] ? parts[2].trim() : "",
-          };
-        }
-        return {
-          date: item.date || importDate,
-          member_num: item.member_num,
-          memo: item.memo || "",
-        };
-      });
-
-      // userMemos import: 구버전 object, 신버전 array 둘 다 처리
-      const rawImportedMemos = importedData.userMemos;
-      let importedUserMemos = [];
-      if (Array.isArray(rawImportedMemos)) {
-        importedUserMemos = rawImportedMemos.map((m) => ({
-          member_num: String(m.member_num),
-          memo: m.memo || "",
-          date: m.date || importDate,
-          color: m.color || "blue",
-        }));
-      } else if (rawImportedMemos && typeof rawImportedMemos === "object") {
-        importedUserMemos = Object.entries(rawImportedMemos).map(
-          ([mid, raw]) => {
-            let memo = raw;
-            let color = "blue";
-            if (typeof raw === "string") {
-              const colonIdx = raw.lastIndexOf(":");
-              if (colonIdx !== -1) {
-                memo = raw.slice(0, colonIdx);
-                color = raw.slice(colonIdx + 1) || "blue";
-              }
-            }
-            return {
-              member_num: mid,
-              memo: memo || "",
-              date: importDate,
-              color,
-            };
-          },
-        );
-      }
-
-      chrome.storage.local.get(
-        [
-          "blockedDogcons",
-          "blockedDogconGroups",
-          "hideNotice",
-          "hidePopular",
-          "hideSidebar",
-          "compactMode",
-          "disableVote",
-          "preventYoutubeAlgorithm",
-          "contentWidth",
-          "blockMethod",
-          "userMemos",
-        ],
-        (currentSettings) => {
-          const blockedDogcons = currentSettings.blockedDogcons || [];
-          const blockedDogconGroups = currentSettings.blockedDogconGroups || [];
-          const hideNotice =
-            typeof currentSettings.hideNotice === "boolean"
-              ? currentSettings.hideNotice
-              : false;
-          const hidePopular =
-            typeof currentSettings.hidePopular === "boolean"
-              ? currentSettings.hidePopular
-              : false;
-          const hideSidebar =
-            typeof currentSettings.hideSidebar === "boolean"
-              ? currentSettings.hideSidebar
-              : false;
-          const compactMode =
-            typeof currentSettings.compactMode === "boolean"
-              ? currentSettings.compactMode
-              : false;
-          const disableVote =
-            typeof currentSettings.disableVote === "boolean"
-              ? currentSettings.disableVote
-              : false;
-          const preventYoutubeAlgorithm =
-            typeof currentSettings.preventYoutubeAlgorithm === "boolean"
-              ? currentSettings.preventYoutubeAlgorithm
-              : false;
-          const contentWidth =
-            typeof currentSettings.contentWidth === "string"
-              ? currentSettings.contentWidth
-              : "";
-          const blockMethod =
-            typeof currentSettings.blockMethod === "string"
-              ? currentSettings.blockMethod
-              : "remove";
-          chrome.storage.local.set(
-            {
-              keywords,
-              blocked_users,
-              blockedDogcons,
-              blockedDogconGroups,
-              hideNotice,
-              hidePopular,
-              hideSidebar,
-              compactMode,
-              disableVote,
-              preventYoutubeAlgorithm,
-              contentWidth,
-              blockMethod,
-              userMemos: importedUserMemos,
-            },
-            () => {
-              alert("🎉 순정 백업 데이터 복원을 완료했습니다!");
-              loadData("keywords", "keyword-list");
-              loadData("blocked_users", "nickname-list");
-              loadData("blockedDogcons", "dogcon-list");
-              loadData("blockedDogconGroups", "dogcon-group-list");
-              if (typeof loadDashboardUserMemos === "function")
-                loadDashboardUserMemos();
-
-              const hideNoticeCb = document.getElementById("hide-notice-cb");
-              const hidePopularCb = document.getElementById("hide-popular-cb");
-              const hideSidebarCb = document.getElementById("hide-sidebar-cb");
-              const compactModeCb = document.getElementById("compact-mode-cb");
-              const disableVoteCb = document.getElementById("disable-vote-cb");
-              const preventYoutubeCb = document.getElementById(
-                "preventYoutubeAlgorithm",
-              );
-              const contentWidthInput = document.getElementById(
-                "content-width-input",
-              );
-
-              if (hideNoticeCb) hideNoticeCb.checked = hideNotice;
-              if (hidePopularCb) hidePopularCb.checked = hidePopular;
-              if (hideSidebarCb) hideSidebarCb.checked = hideSidebar;
-              if (compactModeCb) compactModeCb.checked = compactMode;
-              toggleWidthFormState(compactMode);
-              if (disableVoteCb) disableVoteCb.checked = disableVote;
-              if (preventYoutubeCb)
-                preventYoutubeCb.checked = preventYoutubeAlgorithm;
-              if (contentWidthInput) contentWidthInput.value = contentWidth;
-
-              const methodBlind = document.getElementById("block-method-blind");
-              const methodRemove = document.getElementById(
-                "block-method-remove",
-              );
-              if (blockMethod === "blind" && methodBlind) {
-                methodBlind.checked = true;
-              } else if (methodRemove) {
-                methodRemove.checked = true;
-              }
-              event.target.value = "";
-              refreshActiveTabs();
-            },
-          );
-        },
-      );
-    } catch (err) {
-      alert("❌ 파일 변환 규격 오류가 발생했습니다.");
-      event.target.value = "";
-    }
+      })
+      .catch((err) => console.warn("원격 버전 조회를 스킵합니다:", err.message));
   };
-  reader.readAsText(file);
-}
-
-function restoreFromDogdripPlusPlus(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function (e) {
-    try {
-      const targetJson = JSON.parse(e.target.result);
-      const rawTargetMembers = Array.isArray(targetJson.blocked_members)
-        ? targetJson.blocked_members
-        : [];
-      const rawTargetKeywords = Array.isArray(targetJson.keywords)
-        ? targetJson.keywords
-        : [];
-
-      const importDate2 = getTodayDateStr();
-
-      const convertedUsers = rawTargetMembers.map((item) => {
-        return {
-          date: item.date || importDate2,
-          member_num: String(item.member_num).trim(),
-          memo: item.memo || "",
-        };
-      });
-
-      const convertedKeywords = rawTargetKeywords.map((item) => {
-        return {
-          date: item.date || importDate2,
-          method: item.method || "includes",
-          target: item.target || "all",
-          word: item.keyword,
-        };
-      });
-
-      chrome.storage.local.get(
-        [
-          "blockedDogcons",
-          "blockedDogconGroups",
-          "hideNotice",
-          "hidePopular",
-          "hideSidebar",
-          "compactMode",
-          "disableVote",
-          "preventYoutubeAlgorithm",
-          "contentWidth",
-          "blockMethod",
-          "userMemos",
-        ],
-        (currentSettings) => {
-          if (chrome.runtime?.lastError) return;
-          const keywords = convertedKeywords;
-          const blocked_users = convertedUsers;
-
-          const blockedDogcons = currentSettings.blockedDogcons || [];
-          const blockedDogconGroups = currentSettings.blockedDogconGroups || [];
-          const hideNotice =
-            typeof currentSettings.hideNotice === "boolean"
-              ? currentSettings.hideNotice
-              : false;
-          const hidePopular =
-            typeof currentSettings.hidePopular === "boolean"
-              ? currentSettings.hidePopular
-              : false;
-          const hideSidebar =
-            typeof currentSettings.hideSidebar === "boolean"
-              ? currentSettings.hideSidebar
-              : false;
-          const compactMode =
-            typeof currentSettings.compactMode === "boolean"
-              ? currentSettings.compactMode
-              : false;
-          const disableVote =
-            typeof currentSettings.disableVote === "boolean"
-              ? currentSettings.disableVote
-              : false;
-          const preventYoutubeAlgorithm =
-            typeof currentSettings.preventYoutubeAlgorithm === "boolean"
-              ? currentSettings.preventYoutubeAlgorithm
-              : false;
-          const contentWidth =
-            typeof currentSettings.contentWidth === "string"
-              ? currentSettings.contentWidth
-              : "";
-          const blockMethod =
-            typeof currentSettings.blockMethod === "string"
-              ? currentSettings.blockMethod
-              : "remove";
-          const userMemos = Array.isArray(currentSettings.userMemos)
-            ? currentSettings.userMemos
-            : [];
-
-          chrome.storage.local.set(
-            {
-              keywords,
-              blocked_users,
-              blockedDogcons,
-              blockedDogconGroups,
-              hideNotice,
-              hidePopular,
-              hideSidebar,
-              compactMode,
-              disableVote,
-              preventYoutubeAlgorithm,
-              contentWidth,
-              blockMethod,
-              userMemos,
-            },
-            () => {
-              alert(
-                "🎉 Dogdrip++의 차단 유저 및 조건 키워드 데이터를 성공적으로 변환하여 이식했습니다!",
-              );
-              loadData("keywords", "keyword-list");
-              loadData("blocked_users", "nickname-list");
-              loadData("blockedDogcons", "dogcon-list");
-              loadData("blockedDogconGroups", "dogcon-group-list");
-              if (typeof loadDashboardUserMemos === "function")
-                loadDashboardUserMemos();
-              event.target.value = "";
-              refreshActiveTabs();
-            },
-          );
-        },
-      );
-    } catch (err) {
-      alert(
-        "❌ 타사 백업 JSON 파일을 분석하는 도중 파싱 규격 예외가 발생했습니다.",
-      );
-      event.target.value = "";
-    }
-  };
-  reader.readAsText(file);
-}
-/* =========================================================================
-   🔑 [NEW 코어] 대시보드 키워드 상세 조건 매칭/타겟 핸들러 및 원격 노드 스케줄러
-   ========================================================================= */
-function addNewKeywordObjectItem() {
-  const wordInput = document.getElementById("ext-new-keyword-input");
-  const methodSelect = document.getElementById("ext-new-keyword-method");
-  const targetSelect = document.getElementById("ext-new-keyword-target");
-  if (!wordInput) return;
-
-  const word = wordInput.value.trim();
-  if (!word) {
-    wordInput.focus();
-    return;
-  }
-
-  const method = methodSelect ? methodSelect.value : "includes";
-  const target = targetSelect ? targetSelect.value : "all";
-  const dateStr = getTodayDateStr();
-
-  chrome.storage.local.get(["keywords"], (result) => {
-    const keywords = result.keywords || [];
-    const isDuplicate = keywords.some(
-      (kw) => (kw.word || kw.keyword || "") === word,
-    );
-    if (isDuplicate) {
-      alert(`"${word}" 키워드는 이미 등록되어 있습니다.`);
-      return;
-    }
-    keywords.push({ date: dateStr, method, target, word });
-    chrome.storage.local.set({ keywords }, () => {
-      wordInput.value = "";
-      loadData("keywords", "keyword-list");
-      refreshActiveTabs();
-    });
-  });
-}
-
-function openDashboardKeywordEditPopup(keywordObj) {
-  const popup = document.getElementById("ext-dashboard-keyword-edit-popup");
-  const wordInput = document.getElementById("ext-keyword-popup-word-input");
-  const methodSelect = document.getElementById(
-    "ext-keyword-popup-method-select",
-  );
-  const targetSelect = document.getElementById(
-    "ext-keyword-popup-target-select",
-  );
-  const saveBtn = document.getElementById("ext-keyword-popup-save-btn");
-
-  if (!popup || !wordInput || !methodSelect || !targetSelect || !saveBtn)
-    return;
-
-  const originalWord = keywordObj.word || keywordObj.keyword || "";
-  wordInput.value = originalWord;
-  methodSelect.value = keywordObj.method || "includes";
-
-  // 타사 단수형 세션 포맷 매칭 스킨 보정 처리
-  const currentTarget = keywordObj.target || "all";
-  targetSelect.value =
-    currentTarget === "post"
-      ? "posts"
-      : currentTarget === "comment"
-        ? "comments"
-        : currentTarget;
-
-  popup.style.display = "flex";
-  setTimeout(() => wordInput.focus(), 50);
-
-  // 이벤트 중복 전이 방지용 클론 치환 게이트웨이 기법 수립
-  const newSaveBtn = saveBtn.cloneNode(true);
-  saveBtn.parentNode.replaceChild(newSaveBtn, saveBtn);
-
-  // [수정 완료 저장 트리거]
-  newSaveBtn.addEventListener("click", () => {
-    const nextWord = wordInput.value.trim();
-    if (!nextWord) {
-      alert("❌ 키워드명은 공백으로 설정할 수 없습니다.");
-      return;
-    }
-
-    chrome.storage.local.get(["keywords"], (res) => {
-      let currentKeywords = res.keywords || [];
-
-      // 기존 대상 오브젝트를 인덱스로 정밀 추적하여 값 대치 가동
-      currentKeywords = currentKeywords.map((kw) => {
-        const checkWord = kw.word || kw.keyword || "";
-        if (checkWord === originalWord) {
-          return {
-            date: kw.date || getTodayDateStr(),
-            method: methodSelect.value,
-            target: targetSelect.value,
-            word: nextWord,
-          };
-        }
-        return kw;
-      });
-
-      chrome.storage.local.set({ keywords: currentKeywords }, () => {
-        popup.style.display = "none";
-        loadData("keywords", "keyword-list"); // 새로고침 없이 대시보드 배지 실시간 정렬 최신화
-        refreshActiveTabs(); // 본섭 탭 동기화 트리거
-      });
-    });
-  });
-}
-
-// ⌨️ [options.js] 대시보드 내 모든 수정 팝업(키워드/메모) 통합 ESC 제어 엔진
-document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" || e.key === "Esc") {
-    // 🎯 1. 처리할 대시보드 내 특수 팝업 ID 리스트 등록
-    const targetPopupIds = [
-      "ext-dashboard-keyword-edit-popup",
-      "ext-dashboard-memo-edit-popup",
-    ];
-
-    targetPopupIds.forEach((id) => {
-      const popup = document.getElementById(id);
-      if (!popup) return;
-
-      // 🛡️ 현재 해당 팝업이 화면에 활성화되어 노출 중인지 체크
-      const isVisible =
-        window.getComputedStyle(popup).display === "flex" ||
-        window.getComputedStyle(popup).display === "block" ||
-        popup.classList.contains("active") ||
-        popup.classList.contains("show");
-
-      if (isVisible) {
-        // 🔍 팝업 내부의 취소/닫기 성격의 단추들을 정밀 추적
-        const cancelBtn =
-          popup.querySelector(".btn-secondary") ||
-          popup.querySelector("button[id*='cancel']") ||
-          popup.querySelector("button[id*='close']") ||
-          popup.querySelector(".modal-close");
-
-        if (cancelBtn) {
-          // ① 기존에 구현해둔 데이터 리셋/초기화 스크립트 그대로 실행 (권장)
-          cancelBtn.click();
-        } else {
-          // ② 취소 버튼 매핑 실패 시 물리적으로 디스플레이 오프 가드 집행
-          popup.style.display = "none";
-          popup.classList.remove("active", "show");
-        }
-      }
-    });
-  }
-});
+})();
