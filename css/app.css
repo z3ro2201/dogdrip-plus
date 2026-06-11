@@ -369,7 +369,10 @@ html.ext-hide-compact .recent_wrap .recent_container {
 }
 
 html.ext-hide-compact .recent_wrap .recent_container::after {
-  content: " ";
+  display: block !important;
+  content: "최";
+  width: 10px;
+  color: transparent !important;
   font-size: 0.8rem !important;
 }
 
@@ -472,7 +475,7 @@ body.color_scheme_dark .eq.nav-dropdown-list {
 /**/
 /* ── 블라인드 래퍼 (blind.ts 클래스명 기준) ── */
 .ext-blind-wrapper {
-  width: 100%;
+  width: 100% !important;
   border: 1px dashed #cbd5e1;
   background: #f8fafc;
   border-radius: 6px;
