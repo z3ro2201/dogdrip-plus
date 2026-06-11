@@ -142,8 +142,8 @@
             </div>
 
             <div style="margin-top:24px;padding-top:16px;border-top:1px dashed #cbd5e1;">
-              <h2>\u{1F9ED} \uC0C1\uB2E8 \uB124\uBE44\uAC8C\uC774\uC158 \uBA54\uB274 \uC228\uAE30\uAE30</h2>
-              <p style="font-size:13px;color:#64748b;margin-bottom:12px;">\uCCB4\uD06C \uD574\uC81C\uB41C \uBA54\uB274\uB294 \uC0C1\uB2E8 \uB124\uBE44\uAC8C\uC774\uC158\uC5D0\uC11C \uC228\uACA8\uC9D1\uB2C8\uB2E4. \uC0C1\uC704 \uBA54\uB274 \uCCB4\uD06C \uD574\uC81C \uC2DC \uD558\uC704 \uBA54\uB274 \uC804\uCCB4\uAC00 \uC228\uACA8\uC9D1\uB2C8\uB2E4.</p>
+              <h2>\u{1F9ED} \uBA54\uB274 \uC228\uAE30\uAE30</h2>
+              <p style="font-size:13px;color:#64748b;margin-bottom:12px;">\uCCB4\uD06C \uD574\uC81C\uB41C \uBA54\uB274\uB294 \uC228\uACA8\uC9D1\uB2C8\uB2E4. \uC0C1\uC704 \uBA54\uB274 \uCCB4\uD06C \uD574\uC81C \uC2DC \uD558\uC704 \uBA54\uB274 \uC804\uCCB4\uAC00 \uC228\uACA8\uC9D1\uB2C8\uB2E4.</p>
               <div id="nav-menu-checkbox-group"></div>
             </div>
           </div>
