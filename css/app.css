@@ -334,8 +334,111 @@ html.ext-hide-popular .ed.flex-right a[href*="sort_index=popular"] {
 }
 
 /* 3. 우측 인기글 사이드바 안보기 매칭 */
-html.ext-hide-sidebar .clayerbox-right {
+html.ext-hide-sidebar .eq.clayerbox-right-list {
   display: none !important;
+}
+
+/* 단축키 일람 패널 (우측 사이드바) */
+.ext-shortcut-help {
+  margin-top: 12px;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  font-size: 13px;
+}
+html.ext-dark-mode .ext-shortcut-help,
+[data-rx-color-scheme="dark"] .ext-shortcut-help {
+  background: #1e293b;
+  border-color: #334155;
+}
+.ext-shortcut-help-title {
+  font-weight: bold;
+  font-size: 13px;
+  color: #334155;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+html.ext-dark-mode .ext-shortcut-help-title,
+[data-rx-color-scheme="dark"] .ext-shortcut-help-title {
+  color: #e2e8f0;
+  border-bottom-color: #334155;
+}
+.ext-shortcut-help-subtitle {
+  font-size: 12px;
+  font-weight: bold;
+  color: #475569;
+  margin: 10px 0 6px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+html.ext-dark-mode .ext-shortcut-help-subtitle,
+[data-rx-color-scheme="dark"] .ext-shortcut-help-subtitle {
+  color: #cbd5e1;
+  border-top-color: #334155;
+}
+.ext-shortcut-help-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ext-shortcut-help-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ext-shortcut-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: bold;
+  color: #475569;
+  flex-shrink: 0;
+}
+html.ext-dark-mode .ext-shortcut-key,
+[data-rx-color-scheme="dark"] .ext-shortcut-key {
+  background: #334155;
+  border-color: #475569;
+  color: #e2e8f0;
+}
+.ext-shortcut-label {
+  color: #64748b;
+  font-size: 0.8rem !important;
+}
+html.ext-dark-mode .ext-shortcut-label,
+[data-rx-color-scheme="dark"] .ext-shortcut-label {
+  color: #94a3b8;
+}
+.ext-shortcut-help-settings {
+  display: block;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 12px;
+  font-weight: bold;
+  color: #2563eb;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+.ext-shortcut-help-settings:hover {
+  text-decoration: underline;
+}
+html.ext-dark-mode .ext-shortcut-help-settings,
+[data-rx-color-scheme="dark"] .ext-shortcut-help-settings {
+  border-top-color: #334155;
+  color: #60a5fa;
 }
 
 /* 4. 컴팩트 모드 매칭 */
@@ -1140,4 +1243,138 @@ tr.ext-hotdeal-ended-row {
 
 .hidden {
   display: none !important;
+}
+
+/* ── 개드립콘 단축어 자동완성 드롭다운 ── */
+.ext-dogcon-ac {
+  position: absolute;
+  z-index: 9999999;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+  display: none;
+}
+.ext-dogcon-ac-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.ext-dogcon-ac-item.ext-dogcon-ac-active,
+.ext-dogcon-ac-item:hover {
+  background: #eff6ff;
+}
+.ext-dogcon-ac-img {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+  background: #f1f5f9;
+}
+.ext-dogcon-ac-name {
+  font-weight: bold;
+  font-size: 13px;
+  color: #2563eb;
+}
+.ext-dogcon-ac-alt {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-left: auto;
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── 개드립콘 단축어 토스트 ── */
+.ext-dogcon-toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  z-index: 99999999;
+  background: rgba(30, 41, 59, 0.95);
+  color: #f1f5f9;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: bold;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition:
+    opacity 0.3s,
+    transform 0.3s;
+  pointer-events: none;
+}
+.ext-dogcon-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── 개드립콘 미리보기 (textarea 위) ── */
+.ext-dogcon-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  margin-bottom: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+.ext-dogcon-preview-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.ext-dogcon-preview-item img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+}
+.ext-dogcon-preview-item span {
+  font-size: 11px;
+  color: #2563eb;
+  font-weight: bold;
+}
+
+/* ── 토큰 하이라이트 backdrop (textarea 뒤 겹침) ── */
+.ext-dogcon-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: transparent;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+/* textarea 를 backdrop 위에 투명 배경으로 */
+textarea.dynamic-temp-textarea {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+}
+.ext-dogcon-token {
+  color: #2563eb;
+  background: #dbeafe;
+  border-radius: 3px;
+  font-weight: bold;
+}
+.ext-dogcon-token-invalid {
+  color: #94a3b8;
+  background: #f1f5f9;
 }

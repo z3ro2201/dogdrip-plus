@@ -28,6 +28,7 @@ body {
   padding: 32px 12px;
   box-sizing: border-box;
   position: relative;
+  overflow: auto;
 }
 .sidebar-brand {
   padding: 0 16px 24px 16px;
@@ -59,10 +60,10 @@ body {
   color: #0284c7;
 }
 .sidebar-footer {
-  position: absolute;
-  bottom: 32px;
-  left: 28px;
-  right: 28px;
+  padding-top: 20px;
+  padding-left: 28px;
+  padding-right: 28px;
+  padding-bottom: 32px;
   font-size: 12px;
   color: var(--text-sub);
   line-height: 1.6;
@@ -189,4 +190,78 @@ body {
 }
 .backup-footer button:active {
   transform: scale(0.97);
+}
+
+/* ── 차단 개드립콘 섹션 타이틀 ── */
+.ext-dogcon-section-title {
+  padding: 10px 32px;
+  font-size: 14px;
+  font-weight: bold;
+  color: #475569;
+  margin: 8px 0;
+  padding-bottom: 6px;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+/* ── 단축 개드립콘 목록 ── */
+.ext-dogcon-sc-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin-bottom: 8px;
+  background: #fff;
+}
+.ext-dogcon-sc-img {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+.ext-dogcon-sc-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.ext-dogcon-sc-name {
+  font-weight: bold;
+  font-size: 14px;
+  color: #2563eb;
+}
+.ext-dogcon-sc-alt {
+  font-size: 12px;
+  color: #94a3b8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ext-dogcon-sc-edit,
+.ext-dogcon-sc-del {
+  padding: 5px 12px;
+  border-radius: 5px;
+  font-size: 12px;
+  font-weight: bold;
+  cursor: pointer;
+  border: 1px solid;
+}
+.ext-dogcon-sc-edit {
+  background: #eff6ff;
+  color: #2563eb;
+  border-color: #bfdbfe;
+}
+.ext-dogcon-sc-del {
+  background: #fef2f2;
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+#keyboard-shortcuts-group {
+  padding: 22px 32px;
 }
