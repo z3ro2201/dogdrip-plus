@@ -239,6 +239,89 @@
       >
     </div>
 
+    <div class="ui-card">
+      <h3>🧹 개드립 클리너</h3>
+      <p style="font-size: 12px; color: #94a3b8; margin: 4px 0 12px">
+        내가 쓴 글/댓글을 한 번에 삭제합니다. 개드립 탭에서 실행하세요.
+        <b style="color: #ef4444">삭제된 항목은 복구할 수 없습니다.</b>
+      </p>
+      <div style="display: flex; gap: 8px">
+        <button
+          id="cleaner-doc-btn"
+          style="
+            flex: 1;
+            padding: 10px;
+            background: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fca5a5;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+          "
+        >
+          📄 작성글 삭제
+        </button>
+        <button
+          id="cleaner-comment-btn"
+          style="
+            flex: 1;
+            padding: 10px;
+            background: #fee2e2;
+            color: #b91c1c;
+            border: 1px solid #fca5a5;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+          "
+        >
+          💬 작성댓글 삭제
+        </button>
+      </div>
+      <button
+        id="cleaner-both-btn"
+        style="
+          width: 100%;
+          margin-top: 8px;
+          padding: 10px;
+          background: #b91c1c;
+          color: #fff;
+          border: 1px solid #991b1b;
+          border-radius: 8px;
+          font-weight: 700;
+          font-size: 13px;
+          cursor: pointer;
+        "
+      >
+        🧹 글 + 댓글 모두 삭제
+      </button>
+      <div style="margin-top: 10px">
+        <label
+          style="
+            font-size: 11px;
+            color: #64748b;
+            display: block;
+            margin-bottom: 4px;
+          "
+          >예외 목록 (삭제 제외할 srl, 쉼표로 구분)</label
+        >
+        <input
+          id="cleaner-exclude-input"
+          type="text"
+          placeholder="예: 709276766, 708938703"
+          style="
+            width: 100%;
+            padding: 6px 8px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            font-size: 12px;
+            box-sizing: border-box;
+          "
+        />
+      </div>
+    </div>
+
     <script src="/js/popup.js"></script>
   </body>
 </html>
