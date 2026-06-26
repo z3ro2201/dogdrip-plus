@@ -98,6 +98,10 @@
           <span>레벨 아이콘 숨기기</span>
           <input type="checkbox" id="hide-level-icon-cb" />
         </label>
+        <label class="checkbox-item">
+          <span>상단 네비게이션 따라가기</span>
+          <input type="checkbox" id="sticky-navbar-cb" />
+        </label>
       </div>
       <div class="section-group">
         <p class="section-title">본문 넓이 설정 (기본: 960px)</p>
@@ -134,7 +138,7 @@
     </div>
 
     <div class="ui-card">
-      <h3>🚫 빠른 키워드 차단</h3>
+      <h3>⌨️ 빠른 키워드 차단</h3>
 
       <div style="display: flex; gap: 4px; margin-bottom: 8px">
         <select
@@ -185,13 +189,13 @@
     </div>
 
     <div class="ui-card">
-      <h3>🚫 사용자 차단 처리 방식</h3>
+      <h3>⌨️ 키워드 차단 처리 방식</h3>
       <div class="block-method-container">
         <label class="radio-item">
           <input
             type="radio"
-            name="ext-block-method"
-            id="block-method-remove"
+            name="ext-keyword-block-method"
+            id="kw-block-method-remove"
             value="remove"
             checked
           />
@@ -201,8 +205,48 @@
         <label class="radio-item">
           <input
             type="radio"
-            name="ext-block-method"
-            id="block-method-blind"
+            name="ext-keyword-block-method"
+            id="kw-block-method-blind"
+            value="blind"
+          />
+          <span class="radio-mark"></span>
+          <span
+            >내용을 숨기고 "키워드가 포함된 글/댓글입니다" 블라인드 처리
+            (클릭토글, 마우스 오버 열람)</span
+          >
+        </label>
+        <label class="radio-item">
+          <input
+            type="radio"
+            name="ext-keyword-block-method"
+            id="kw-block-method-badge"
+            value="badge"
+          />
+          <span class="radio-mark"></span>
+          <span>글 유지하고 키워드 차단 배지 표기</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="ui-card">
+      <h3>👤 사용자 차단 처리 방식</h3>
+      <div class="block-method-container">
+        <label class="radio-item">
+          <input
+            type="radio"
+            name="ext-user-block-method"
+            id="user-block-method-remove"
+            value="remove"
+            checked
+          />
+          <span class="radio-mark"></span>
+          <span>목록에서 삭제</span>
+        </label>
+        <label class="radio-item">
+          <input
+            type="radio"
+            name="ext-user-block-method"
+            id="user-block-method-blind"
             value="blind"
           />
           <span class="radio-mark"></span>
@@ -214,8 +258,8 @@
         <label class="radio-item">
           <input
             type="radio"
-            name="ext-block-method"
-            id="block-method-badge"
+            name="ext-user-block-method"
+            id="user-block-method-badge"
             value="badge"
           />
           <span class="radio-mark"></span>
@@ -223,22 +267,6 @@
         </label>
       </div>
     </div>
-
-    <div style="margin-top: 16px; text-align: center">
-      <a
-        id="open-options-link"
-        href="#"
-        style="
-          font-size: 12.5px;
-          color: var(--md-primary);
-          text-decoration: none;
-          font-weight: 700;
-          letter-spacing: -0.3px;
-        "
-        >🛠️ 차단 내역 조회 및 전체 설정 관리</a
-      >
-    </div>
-
     <div class="ui-card">
       <h3>🧹 개드립 클리너</h3>
       <p style="font-size: 12px; color: #94a3b8; margin: 4px 0 12px">
@@ -296,6 +324,7 @@
       >
         🧹 글 + 댓글 모두 삭제
       </button>
+
       <div style="margin-top: 10px">
         <label
           style="
@@ -320,6 +349,20 @@
           "
         />
       </div>
+    </div>
+    <div style="margin-top: 16px; text-align: center">
+      <a
+        id="open-options-link"
+        href="#"
+        style="
+          font-size: 12.5px;
+          color: var(--md-primary);
+          text-decoration: none;
+          font-weight: 700;
+          letter-spacing: -0.3px;
+        "
+        >🛠️ 차단 내역 조회 및 전체 설정 관리</a
+      >
     </div>
 
     <script src="/js/popup.js"></script>

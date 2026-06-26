@@ -1378,3 +1378,1470 @@ textarea.dynamic-temp-textarea {
   color: #94a3b8;
   background: #f1f5f9;
 }
+
+/* 상단 네비게이션 따라가기 (스크롤 시 고정) */
+html.ext-sticky-navbar div#navbar,
+html.ext-sticky-navbar .eq.navbar:root {
+  /* Backgrounds: 기존의 단순 웜그레이(#f3f4f6)를 개드립 브랜드와 어울리는 '맑은 쿨그레이(Slate)' 톤으로 변경 */
+  --bg-main: #f1f5f9 !important;
+  --bg-card: #ffffff !important;
+
+  /* Primary Colors: 흰 배경에서 시인성(대비율)이 더 좋으면서 클릭하고 싶게 만드는 선명한 블루 */
+  --md-primary: #2563eb !important; /* 기존 #3b82f6는 흰 배경에서 약간 눈부실 수 있음. 한 톤 더 진하고 쨍한 블루 */
+  --md-primary-hover: #1d4ed8 !important; /* 마우스를 올렸을 때 확실하게 피드백을 주는 다크 블루 */
+
+  /* Text (웹 접근성 향상): 흐릿한 쥐색을 빼고, 가독성 높은 네이비-블랙 계열 사용 */
+  --text-main: #0f172a !important; /* 단순 검정 대신 아주 깊은 네이비 블랙을 써서 고급스러움 추가 */
+  --text-sub: #475569 !important; /* 기존 #6b7280보다 더 진하게 잡아주어 저시력자/색약자도 보조텍스트를 또렷하게 읽을 수 있음 */
+
+  /* Borders: 둔탁해 보이지 않도록 차갑고 깨끗한 선 색상 */
+  --border-color: #e2e8f0 !important;
+
+  /* Border Radii: 둥글둥글한 트렌디한 형태는 아주 좋으므로 기존 값 유지 */
+  --radius-lg: 20px !important;
+  --radius-md: 12px !important;
+  --radius-pill: 9999px !important;
+}
+
+body.color_scheme_light,
+body:not(.color_scheme_light):not(.color_scheme_dark) {
+  /* Backgrounds: 칙칙한 회색(#f9f9f9) 대신, 맑고 차가운 빛이 도는 세련된 흰색/슬레이트 톤 */
+  --dogcon-bg-primary: #ffffff !important;
+  --dogcon-bg-secondary: #f8fafc !important; /* 애플/토스 등에서 자주 쓰는 아주 맑은 쿨그레이 */
+  --dogcon-bg-hover: #f1f5f9 !important;
+
+  /* Borders: 선명도를 살짝 올려 형태 구분을 명확히 (접근성 향상) */
+  --dogcon-border-primary: #e2e8f0 !important;
+  --dogcon-border-secondary: #cbd5e1 !important;
+  --dogcon-border-hover: #94a3b8 !important;
+
+  /* Text (Accessibility AA~AAA): #999 같은 날아가는 색상 제거, 묵직하고 모던한 진회색 사용 */
+  --dogcon-text-primary: #0f172a !important; /* 단순한 검정(#333)보다 고급스러운 딥 슬레이트 블랙 */
+  --dogcon-text-secondary: #475569 !important;
+  --dogcon-text-muted: #64748b !important; /* 연하지만 배경에 묻히지 않는 적정 명도 (저시력자 보호) */
+
+  /* Accents: 색맹/색약자도 명도 차이로 구분하기 쉽게 대비를 높이고, 요즘 UI 스타일로 채도 조정 */
+  --dogcon-accent-recent: #3b82f6 !important; /* 쨍하고 트렌디한 블루 */
+  --dogcon-accent-active: #059669 !important; /* 기존 연두색은 흰배경에서 안 보임 -> 진하고 선명한 에메랄드 그린 */
+  --dogcon-accent-danger: #dc2626 !important; /* 흐릿한 빨강 대신 강렬하고 또렷한 크림슨 레드 */
+  --dogcon-accent-navigate: #4f46e5 !important; /* 젊은 느낌을 주는 세련된 인디고(보라+파랑) */
+
+  /* Highlights: 개드립 브랜드 컬러와 어울리는 맑은 블루 톤 */
+  --dogcon-highlight-bg: #eff6ff !important;
+  --dogcon-highlight-border: #3b82f6 !important;
+
+  /* Skeletons: 맑은 배경에 맞춰 부드러운 로딩 구현 */
+  --dogcon-skeleton-bg: #f1f5f9 !important;
+  --dogcon-skeleton-shimmer: #e2e8f0 !important;
+
+  /* Shadows: 기존의 탁하고 좁은 그림자 대신, 넓고 투명하게 퍼지는 모던 UI 그림자 스타일 (입체감 향상) */
+  --dogcon-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05) !important;
+  --dogcon-shadow-hover:
+    0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04) !important;
+
+  /* Radii */
+  --multicon-radius-single: 4px !important;
+  --multicon-radius-left: 4px 0 0 4px !important;
+  --multicon-radius-right: 0 4px 4px 0 !important;
+  --multicon-radius-border-left: 8px 0 0 8px !important;
+  --multicon-radius-border-right: 0 8px 8px 0 !important;
+}
+
+body.color_scheme_light .eq.background-color-content,
+body:not(.color_scheme_light):not(.color_scheme_dark)
+  .eq.background-color-content {
+  background-color: #fafaf8;
+}
+
+body.color_scheme_dark {
+  /* Backgrounds: 깊은 네이비 블랙 베이스 & 브랜드 컬러 호버 */
+  --dogcon-bg-primary: #11161d !important;
+  --dogcon-bg-secondary: #1a232f !important;
+  --dogcon-bg-hover: #2e4361 !important;
+
+  /* Borders: 차가운 톤에 맞춘 테두리 */
+  --dogcon-border-primary: rgba(148, 163, 184, 0.1) !important;
+  --dogcon-border-secondary: rgba(148, 163, 184, 0.15) !important;
+  --dogcon-border-hover: rgba(148, 163, 184, 0.25) !important;
+
+  /* Text: 시각장애인/저시력자도 또렷하게 읽을 수 있는 고대비 맑은 텍스트 */
+  --dogcon-text-primary: #f8fafc !important;
+  --dogcon-text-secondary: #cbd5e1 !important;
+  --dogcon-text-muted: #94a3b8 !important;
+
+  /* Accents: 젊고 트렌디한 파스텔 & 네온 포인트 컬러 */
+  --dogcon-accent-recent: #60a5fa !important;
+  --dogcon-accent-active: #4ade80 !important;
+  --dogcon-accent-danger: #fb7185 !important;
+  --dogcon-accent-navigate: #93c5fd !important;
+
+  /* Highlights: 브랜드 컬러 반투명 활용 */
+  --dogcon-highlight-bg: rgba(46, 67, 97, 0.4) !important;
+  --dogcon-highlight-border: #60a5fa !important;
+
+  /* Skeletons: 로딩 애니메이션에 브랜드 컬러 은은하게 노출 */
+  --dogcon-skeleton-bg: #1a232f !important;
+  --dogcon-skeleton-shimmer: #2e4361 !important;
+
+  /* Shadows: 하얀 탁한 그림자 대신 진한 블랙 그림자로 다크모드 입체감 부여 */
+  --dogcon-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+  --dogcon-shadow-hover: 0 6px 16px rgba(0, 0, 0, 0.6) !important;
+
+  /* Radii: 기존 형태 유지 (강제 적용) */
+  --multicon-radius-single: 4px !important;
+  --multicon-radius-left: 4px 0 0 4px !important;
+  --multicon-radius-right: 0 4px 4px 0 !important;
+  --multicon-radius-border-left: 8px 0 0 8px !important;
+  --multicon-radius-border-right: 0 8px 8px 0 !important;
+}
+
+body.color_scheme_dark .eq.background-color-content {
+  background-color: #161616 !important;
+}
+
+.eq.logo-item {
+  margin-right: 1.75rem;
+}
+.eq.logo-item::after {
+  position: absolute;
+  content: "Plus +";
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #fff;
+  top: 0.6rem;
+  right: -2.35rem;
+}
+
+.eq.nav-dropdown {
+  padding: 15px 0px !important;
+}
+
+.eq.nav-dropdown > li > a {
+  padding: 5px 20px !important;
+}
+
+#ext-loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(46, 67, 97, 0.015);
+  z-index: 999999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  transition: opacity 0.2s ease-out;
+  color: #ffffff;
+  font-family: sans-serif;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  border-top: 4px solid #ffffff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 15px;
+}
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+.loading-text {
+  font-size: 14px;
+  letter-spacing: 0.5px;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+#ext-block-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-family: sans-serif;
+}
+
+#ext-block-modal .modal-content {
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  width: 280px;
+  text-align: center;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  color: #333333;
+}
+#ext-block-modal p {
+  margin: 0 0 15px 0;
+  font-size: 14px;
+  line-height: 1.5;
+  font-weight: 500;
+}
+#ext-block-modal .modal-btns {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+#ext-block-modal button {
+  padding: 6px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+}
+#ext-block-modal .btn-danger {
+  background-color: #f43f5e;
+  color: white;
+}
+#ext-block-modal .btn-secondary {
+  background-color: #e2e8f0;
+  color: #334155;
+}
+
+.ext-block-menu-item {
+  cursor: pointer;
+}
+.xe-widget-wrapper {
+  height: auto !important;
+}
+.eq.clayerbox-right-list {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+.input-group {
+  display: flex;
+  gap: 8px;
+}
+.input-group > input[type="text"] {
+  flex: 1;
+  padding: 10px 16px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-pill);
+  font-size: 13px;
+  background-color: #f9fafb;
+  color: var(--text-main);
+  transition: all 0.2s ease;
+}
+.input-group > input[type="text"]:focus {
+  outline: none;
+  border-color: var(--md-primary);
+  background-color: #ffffff;
+}
+
+#ext-dogcon-menu {
+  position: absolute;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 4px 0;
+  z-index: 2000000;
+  font-family: sans-serif;
+  min-width: 190px;
+}
+.dogcon-menu-item {
+  padding: 8px 12px;
+  font-size: 12px;
+  color: #334155;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  text-decoration: none;
+}
+.dogcon-menu-item:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+.dogcon-menu-item.block-action {
+  color: #ef4444;
+  font-weight: bold;
+}
+.dogcon-menu-item.unblock-action {
+  color: #10b981;
+  font-weight: bold;
+}
+
+.ext-dogcon-blocked {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  background: #f1f5f9;
+  color: #64748b;
+  max-width: 100px !important;
+  border: 1px dashed #cbd5e1;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 11px !important;
+  margin: 2px;
+  font-family: sans-serif;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.2s;
+}
+
+.ext-dogcon-blocked:hover {
+  background: #e2e8f0;
+  color: #334155;
+}
+
+/* 1. 공지글 안보기 매칭 (html에 클래스가 붙었을 때 내부 li, tr을 조준) */
+html.ext-hide-notice li.notice,
+html.ext-hide-notice tr.notice {
+  display: none !important;
+}
+
+/* 2. 인기글 안보기 매칭 */
+html.ext-hide-popular li.popular-item,
+html.ext-hide-popular tr.popular-item {
+  display: none !important;
+}
+
+html.ext-hide-popular .ed.flex-right a[href*="sort_index=popular"] {
+  display: none !important;
+}
+
+/* 3. 우측 인기글 사이드바 안보기 매칭 */
+html.ext-hide-sidebar .eq.clayerbox-right-list {
+  display: none !important;
+}
+
+/* 단축키 일람 패널 (우측 사이드바) */
+.ext-shortcut-help {
+  margin-top: 12px;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  font-size: 13px;
+}
+html.ext-dark-mode .ext-shortcut-help,
+[data-rx-color-scheme="dark"] .ext-shortcut-help {
+  background: #1e293b;
+  border-color: #334155;
+}
+.ext-shortcut-help-title {
+  font-weight: bold;
+  font-size: 13px;
+  color: #334155;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #f1f5f9;
+}
+html.ext-dark-mode .ext-shortcut-help-title,
+[data-rx-color-scheme="dark"] .ext-shortcut-help-title {
+  color: #e2e8f0;
+  border-bottom-color: #334155;
+}
+.ext-shortcut-help-subtitle {
+  font-size: 12px;
+  font-weight: bold;
+  color: #475569;
+  margin: 10px 0 6px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+html.ext-dark-mode .ext-shortcut-help-subtitle,
+[data-rx-color-scheme="dark"] .ext-shortcut-help-subtitle {
+  color: #cbd5e1;
+  border-top-color: #334155;
+}
+.ext-shortcut-help-body {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.ext-shortcut-help-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.ext-shortcut-key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  font-weight: bold;
+  color: #475569;
+  flex-shrink: 0;
+}
+html.ext-dark-mode .ext-shortcut-key,
+[data-rx-color-scheme="dark"] .ext-shortcut-key {
+  background: #334155;
+  border-color: #475569;
+  color: #e2e8f0;
+}
+.ext-shortcut-label {
+  color: #64748b;
+  font-size: 0.8rem !important;
+}
+html.ext-dark-mode .ext-shortcut-label,
+[data-rx-color-scheme="dark"] .ext-shortcut-label {
+  color: #94a3b8;
+}
+.ext-shortcut-help-settings {
+  display: block;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+  font-size: 12px;
+  font-weight: bold;
+  color: #2563eb;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+.ext-shortcut-help-settings:hover {
+  text-decoration: underline;
+}
+html.ext-dark-mode .ext-shortcut-help-settings,
+[data-rx-color-scheme="dark"] .ext-shortcut-help-settings {
+  border-top-color: #334155;
+  color: #60a5fa;
+}
+
+/* 4. 컴팩트 모드 매칭 */
+html.ext-hide-compact .recent_wrap,
+html.ext-hide-compact .favorite {
+  /* display: none !important; */
+}
+
+html.ext-hide-compact .favorite {
+  font-size: 12px;
+  background-color: unset !important;
+  border: unset !important;
+  padding: 4px;
+}
+
+html.ext-hide-compact .favorite::after {
+  content: "";
+  font-size: 12px;
+}
+
+html.ext-hide-compact .favorite * {
+  display: none !important;
+}
+
+html.ext-hide-compact .recent_wrap .recent_container {
+  padding: 5px 8px !important;
+  font-size: 0.8rem !important;
+  background-color: unset !important;
+  border-top: unset !important;
+  border-bottom: unset !important;
+}
+
+html.ext-hide-compact .recent_wrap .recent_container::after {
+  display: block !important;
+  content: "최";
+  width: 10px;
+  color: transparent !important;
+  font-size: 0.8rem !important;
+}
+
+html.ext-hide-compact .recent_wrap .recent_container * {
+  display: none !important;
+}
+
+html.ext-hide-compact .article-wrapper {
+  margin-bottom: 20px !important;
+}
+html.ext-hide-compact .ed.board-header {
+  margin-bottom: 0 !important;
+}
+
+/* 5. 추천 기능 비활성화 (본문 하단 큰 박스 선제 숨김) */
+html.ext-hide-vote .wgtRv.ed_vote.visited {
+  display: none !important;
+}
+
+/* 본문 세부 콘텐츠 박스 및 하위 섹션 레이아웃 폭 강제 동기화 */
+html[style*="--ext-custom-width"] .container {
+  width: var(--ext-custom-width) !important;
+  max-width: var(--ext-custom-width) !important;
+  min-width: var(--ext-custom-width) !important;
+  margin: 0 auto !important; /* 가운데 정렬 마감 */
+}
+
+html.ext-hide-compact .secontent,
+html.ext-hide-compact .board-list,
+html.ext-hide-compact .ed.board.container {
+  width: 100% !important; /* 부모 컨테이너인 1200px에 맞춰 꽉 차게 확장 */
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+html.ddnad {
+  display: none !important;
+}
+
+.eq.navbar.primary .eq.navbar-nav > li > a {
+  font-size: 14.5px;
+  font-weight: 400;
+}
+.eq.navbar.primary .eq.navbar-nav > li.active > a {
+  color: #fff !important;
+  font-size: 14.5px;
+  font-weight: 500;
+}
+.eq.navbar.primary .eq.navbar-nav > li > a:hover {
+  background-color: rgba(255, 255, 255, 0.125);
+}
+
+body.color_scheme_light .eq.nav-dropdown-list li a {
+  color: #000 !important;
+}
+
+body.color_scheme_dark .eq.nav-dropdown-list {
+  color: #d3d3d3 !important;
+}
+
+.eq.nav-dropdown-list li a:hover {
+  background-color: #eee;
+}
+
+/**/
+.ed.category-pill ul li a {
+  display: inline-block; /* 여백이 정확히 적용되도록 추가 */
+  padding: 8px 16px; /* 상하를 줄이고 좌우를 늘려 안정감 확보 */
+  margin: 0 6px 6px 0; /* 마진 통합 */
+  border-radius: 8px; /* 너무 둥근 것보다 8px 정도가 모던함 */
+  color: #374151; /* 더 진한 색으로 가독성 확보 */
+  font-size: 0.85rem; /* 13px 대신 rem 사용 권장 */
+  font-weight: 500; /* 텍스트에 약간의 무게감 추가 */
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb; /* 테두리를 넣어 흰색 배경에서도 경계를 명확히 */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08); /* 그림자를 연하게 수정 */
+  transition: all 0.2s ease;
+}
+
+/* 마우스 올렸을 때 강조 */
+.ed.category-pill ul li a:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+/* 활성 상태 버튼 */
+.ed.category-pill ul li.active a {
+  color: #ffffff !important; /* 텍스트는 흰색으로 명확하게 */
+  background-color: #2e4361 !important; /* 메인 포인트 컬러 */
+  border-color: #2e4361 !important; /* 테두리도 배경색과 맞춤 */
+  box-shadow: 0 2px 4px rgba(46, 67, 97, 0.3) !important; /* 살짝 더 묵직한 그림자 */
+  font-weight: 700 !important; /* 굵게 하여 시선 집중 */
+}
+
+/* 마우스 올렸을 때의 변화 */
+.ed.category-pill ul li.active a:hover {
+  background-color: #3b557a !important; /* 조금 더 밝은 톤으로 인터랙션 */
+}
+
+/**/
+/* ── 블라인드 래퍼 (blind.ts 클래스명 기준) ── */
+.ext-blind-wrapper {
+  width: 100% !important;
+  border: 1px dashed #cbd5e1;
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin: 4px 0;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.ext-blind-label {
+  color: #64748b;
+  font-weight: 500;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+}
+
+.ext-blind-toggle-btn {
+  color: #0284c7;
+  background: none;
+  border: none;
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 12px;
+  cursor: pointer;
+  padding: 0;
+}
+
+.ext-blind-content {
+  position: relative;
+  display: none;
+  margin-top: 10px;
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 10px;
+}
+
+.ext-blind-content > table {
+  width: 100%;
+}
+
+.ext-blind-content > table > tbody > tr {
+  border-top: 1px solid #ededed;
+  border-bottom: 1px solid #ededed;
+  transition: 0.2s;
+  -o-transition: 0.2s;
+  -moz-transition: 0.2s;
+  -webkit-transition: 0.2s;
+}
+
+.ext-blind-content > table > tbody > tr > td.title {
+  width: 100%;
+  min-width: 150px;
+}
+
+.ext-blind-content > table > tbody > tr > td.author {
+  white-space: nowrap;
+  min-width: 150px;
+}
+
+.ext-blind-content > a.ed,
+.ext-blind-content > table > tbody > tr > td.author > a {
+  display: block;
+}
+
+.ext-blind-content > .ed.comment-content {
+  padding: 1rem;
+  width: 100% !important;
+  background-color: #fff;
+}
+.ext-blocked-user-layout {
+  background-color: rgb(255, 241, 242);
+}
+a.ext-dl-all-btn {
+  display: flex;
+  color: rgb(2, 132, 199) !important;
+  font-weight: bold;
+  font-size: 13px;
+  padding: 4px 0px;
+  display: block !important;
+  padding: 10px 15px !important;
+  color: #000000;
+  text-decoration: none;
+  -webkit-transition: all 150ms;
+  transition: all 150ms;
+}
+/* 🛡️ 개드립 Plus+ 차단 유저 전용 파스텔 배지 규격 */
+.ext-user-memo-badge.ext-memo-red-solid {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background-color: #ffe4e6 !important; /* OneUI/Material 스타일 파스텔 레드 배경 */
+  color: #e11d48 !important; /* 명도 대비를 맞춘 고급스러운 다크 레드 텍스트 */
+  border: 1px solid #fecdd3 !important; /* 은은한 마감선 */
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  padding: 2px 7px !important;
+  border-radius: 6px !important; /* One UI 특유의 부드러운 라운딩 알약 뱃지 */
+  vertical-align: middle;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.ext-blind-content > li > .ext-user-memo-badge.ext-memo-red-solid {
+  margin-left: 6px !important;
+}
+
+.ext-blind-content > td.author > .ext-user-memo-badge.ext-memo-red-solid {
+  margin-left: 0px !important;
+}
+
+/* 배지 앞에 시각적 가시성을 높여줄 가벼운 아이콘 에셋 주입 */
+.ext-user-memo-badge.ext-memo-red-solid::before {
+  content: "⚠️";
+  font-size: 10px;
+  margin-right: 1px;
+}
+
+/* 현재 보고 있는 게시글 */
+body.color_scheme_light .ed .current,
+body:not(.color_scheme_light):not(.color_scheme_dark) .ed .current {
+  /* 기존 쨍한 색상 대신 아주 옅은 쿨그레이/블루 톤 (투명도 느낌) */
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important; /* 텍스트는 선명한 진회색 */
+  font-weight: 600 !important;
+}
+
+/* ── 다크모드 개선 ── */
+
+/* 블라인드 래퍼 */
+body.color_scheme_dark .ext-blind-wrapper {
+  background-color: #2a2a2a !important;
+  border-color: #444 !important;
+  color: #d4d4d4 !important;
+}
+body.color_scheme_dark .ext-blind-label {
+  color: #94a3b8 !important;
+}
+body.color_scheme_dark .ext-blind-content > .ed.comment-content,
+body.color_scheme_dark .ext-blind-content .ed.comment-content,
+body.color_scheme_dark .ext-blind-content .comment-content,
+body.color_scheme_dark .ext-blind-content .xe_content,
+body.color_scheme_dark .ext-blind-content table,
+body.color_scheme_dark .ext-blind-content tr,
+body.color_scheme_dark .ext-blind-content td {
+  background-color: #1e1e1e !important;
+  color: #d4d4d4 !important;
+}
+body.color_scheme_dark .ext-blind-content {
+  border-color: #444 !important;
+}
+
+/* 차단 유저 배경 */
+body.color_scheme_dark .ext-blocked-user-layout {
+  background-color: #3d2b2c !important;
+}
+
+/* 현재 보고 있는 게시글 */
+body.color_scheme_dark .ed.current,
+body.color_scheme_dark .ed .current {
+  background-color: #2d3748 !important;
+  color: #e2e8f0 !important;
+  font-weight: 600 !important;
+  border: none !important;
+}
+body.color_scheme_dark .ed.webzine.popular-item .title .title-link {
+  font-weight: bold !important;
+}
+
+/* 링크 색상 */
+body.color_scheme_dark .ed a {
+  color: #d3d3d3 !important;
+}
+body.color_scheme_dark .ed a:visited {
+  color: #9a9a9a !important;
+}
+body.color_scheme_dark .ed .current a {
+  color: #a0aec0 !important;
+}
+
+/* ================= 📖 가독성 모드 ================= */
+html.ext-readability-mode body,
+html.ext-readability-mode a,
+html.ext-readability-mode h1,
+html.ext-readability-mode h2,
+html.ext-readability-mode h3,
+html.ext-readability-mode h4,
+html.ext-readability-mode h5,
+html.ext-readability-mode h6,
+html.ext-readability-mode span,
+html.ext-readability-mode p,
+html.ext-readability-mode input,
+html.ext-readability-mode textarea,
+html.ext-readability-mode select,
+html.ext-readability-mode button,
+html.ext-readability-mode label,
+html.ext-readability-mode fieldset,
+html.ext-readability-mode legend,
+html.ext-readability-mode td,
+html.ext-readability-mode th,
+html.ext-readability-mode table,
+html.ext-readability-mode caption,
+html.ext-readability-mode code,
+html.ext-readability-mode pre,
+html.ext-readability-mode li,
+html.ext-readability-mode dt,
+html.ext-readability-mode dd,
+html.ext-readability-mode blockquote,
+html.ext-readability-mode cite,
+html.ext-readability-mode .ed:not(.fa):not(.fas):not(.far):not(.fab),
+html.ext-readability-mode .ed *:not(.fa):not(.fas):not(.far):not(.fab) {
+  font-family:
+    "Pretendard JP",
+    "Pretendard",
+    -apple-system,
+    BlinkMacSystemFont,
+    system-ui,
+    Roboto,
+    "Helvetica Neue",
+    "Segoe UI",
+    "Apple SD Gothic Neo",
+    "Noto Sans KR",
+    "Malgun Gothic",
+    "Apple Color Emoji",
+    "Segoe UI Emoji",
+    "Segoe UI Symbol",
+    sans-serif !important;
+}
+
+html.ext-readability-mode .xe_content,
+html.ext-readability-mode .ed.comment-content,
+html.ext-readability-mode .ed.board-list,
+html.ext-readability-mode .ed.document-list {
+  font-size: 15px !important;
+  line-height: 1.8 !important;
+  letter-spacing: 0.025em !important;
+  word-spacing: 0.05em !important;
+}
+
+html.ext-readability-mode .xe_content p,
+html.ext-readability-mode .xe_content li,
+html.ext-readability-mode .xe_content span,
+html.ext-readability-mode .xe_content div {
+  font-size: inherit !important;
+  line-height: inherit !important;
+  letter-spacing: inherit !important;
+}
+
+html.ext-readability-mode .ed .title-link,
+html.ext-readability-mode .ed span.text-link {
+  font-size: 14px !important;
+  line-height: 1.6 !important;
+  letter-spacing: 0.01em !important;
+}
+
+html.ext-readability-mode .ed.comment-content {
+  font-size: 14px !important;
+  line-height: 1.7 !important;
+}
+
+html.ext-readability-mode body.color_scheme_dark .ed.text-primary {
+  color: #0284c7 !important;
+}
+
+html.ext-readability-mode .ed.label-primary {
+  padding: 1px 8px !important;
+}
+html.ext-readability-mode body.color_scheme_dark .ed.label-primary {
+  color: #fff !important;
+}
+
+/* 가독성 모드 - 카테고리 필 (라이트) */
+html.ext-readability-mode .ed.category-pill ul li a {
+  display: inline-block;
+  padding: 8px 16px;
+  margin: 0 6px 6px 0;
+  border-radius: 8px;
+  color: #374151;
+  font-size: 0.85rem;
+  font-weight: 500;
+  background-color: #ffffff;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  transition: all 0.2s ease;
+}
+html.ext-readability-mode .ed.category-pill ul li a:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+html.ext-readability-mode .ed.category-pill ul li.active a {
+  color: #ffffff !important;
+  background-color: #2e4361 !important;
+  border-color: #2e4361 !important;
+  box-shadow: 0 2px 4px rgba(46, 67, 97, 0.3) !important;
+  font-weight: 700 !important;
+}
+html.ext-readability-mode .ed.category-pill ul li.active a:hover {
+  background-color: #3b557a !important;
+}
+
+/* 가독성 모드 - 다크모드 배경색 */
+html.ext-readability-mode body.color_scheme_dark {
+  background-color: #1e1e1e !important;
+}
+
+/* 가독성 모드 - 카테고리 필 (다크) */
+html.ext-readability-mode body.color_scheme_dark .ed.category-pill ul li a {
+  background-color: #2a2a2a;
+  border: 1px solid #3f3f3f;
+  color: #c9d1d9;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+html.ext-readability-mode
+  body.color_scheme_dark
+  .ed.category-pill
+  ul
+  li
+  a:hover {
+  background-color: #333333;
+  color: #e6edf3;
+}
+html.ext-readability-mode
+  body.color_scheme_dark
+  .ed.category-pill
+  ul
+  li.active
+  a {
+  color: #ffffff !important;
+  background-color: #3b6ea5 !important;
+  border-color: #3b6ea5 !important;
+  box-shadow: 0 2px 4px rgba(59, 110, 165, 0.4) !important;
+  font-weight: 700 !important;
+}
+html.ext-readability-mode
+  body.color_scheme_dark
+  .ed.category-pill
+  ul
+  li.active
+  a:hover {
+  background-color: #4a7db5 !important;
+}
+
+/* ================= 🚀 퀵버튼 패널 ================= */
+
+/* 기존 퀵 패널 제거 */
+.eq.button-scroll-tool-box {
+  display: none !important;
+}
+
+/* 구형 도구모음 사용 시 원상복구 */
+html.ext-legacy-toolbar .eq.button-scroll-tool-box {
+  display: flex !important;
+}
+html.ext-legacy-toolbar #ext-quick-panel {
+  display: none !important;
+}
+
+#ext-quick-panel {
+  position: fixed;
+  right: 16px;
+  bottom: 80px;
+  z-index: 999990;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.ext-qk-btn {
+  height: 40px;
+  width: 40px;
+  border-radius: 20px;
+  border: none;
+  background: #1e293b;
+  color: #cbd5e1;
+  font-size: 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 12px;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  transition:
+    width 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.15s,
+    color 0.15s,
+    opacity 0.15s;
+  opacity: 0.75;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+/* 아이콘은 항상 오른쪽 고정 */
+.ext-qk-btn i {
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+}
+
+/* 툴팁 텍스트 — 평소엔 숨김 */
+.ext-qk-btn .ext-qk-label {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  opacity: 0;
+  max-width: 0;
+  overflow: hidden;
+  transition:
+    opacity 0.15s 0.05s,
+    max-width 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  order: -1; /* 텍스트가 아이콘 왼쪽 */
+}
+
+.ext-qk-btn:hover {
+  width: auto;
+  min-width: 40px;
+  background: #334155;
+  color: #f1f5f9;
+  opacity: 1;
+  padding: 0 14px 0 12px;
+}
+
+.ext-qk-btn:hover .ext-qk-label {
+  opacity: 1;
+  max-width: 180px;
+}
+
+.ext-qk-btn.ext-qk-active {
+  background: #0284c7;
+  color: #ffffff;
+  opacity: 1;
+}
+
+.ext-qk-btn.ext-qk-active:hover {
+  background: #0369a1;
+}
+
+@media (max-width: 1050px) {
+  #ext-quick-panel {
+    flex-direction: row;
+    right: 16px;
+    left: auto;
+    transform: none;
+    bottom: calc(80px + 1rem);
+    align-items: center;
+  }
+
+  /* 좁은 화면에선 pill 확장 없이 아이콘만 */
+  .ext-qk-btn:hover {
+    width: 40px;
+    padding: 0 12px;
+  }
+
+  .ext-qk-btn:hover .ext-qk-label {
+    opacity: 0;
+    max-width: 0;
+  }
+}
+
+/* 다크모드 대응 */
+body.color_scheme_dark .ext-qk-btn {
+  background: #334155;
+  color: #94a3b8;
+}
+body.color_scheme_dark .ext-qk-btn:hover {
+  background: #475569;
+  color: #f1f5f9;
+}
+body.color_scheme_dark .ext-qk-btn.ext-qk-active {
+  background: #0284c7;
+  color: #ffffff;
+}
+body.color_scheme_dark .ext-qk-btn.ext-qk-active:hover {
+  background: #0369a1;
+}
+
+/* ================= 🔗 링크 복사 버튼 ================= */
+a.ext-copy-link-btn {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 8px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0284c7;
+  background: #e0f2fe;
+  border: 1px solid #bae6fd;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background 0.15s,
+    color 0.15s;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+a.ext-copy-link-btn:hover {
+  background: #bae6fd;
+  color: #0369a1;
+}
+body.color_scheme_dark a.ext-copy-link-btn {
+  color: #7dd3fc;
+  background: #1e3a4a;
+  border-color: #2d5a72;
+}
+body.color_scheme_dark a.ext-copy-link-btn:hover {
+  background: #264d63;
+  color: #bae6fd;
+}
+
+/* 레벨 아이콘 숨기기 */
+html.ext-hide-level-icon img.xe_point_level_icon {
+  display: none !important;
+}
+
+/* ── 읽기 모드 ── */
+
+/* 네비/사이드바/푸터 등 페이지 프레임 전체 숨김 */
+html.ext-reader-mode .gnb,
+html.ext-reader-mode .eq.navbar,
+html.ext-reader-mode .eq.nav-drawer,
+html.ext-reader-mode .sidebar,
+html.ext-reader-mode .clayerbox-right,
+html.ext-reader-mode .ed.board-header,
+html.ext-reader-mode .ed.board-list,
+html.ext-reader-mode .ed.pagination-container,
+html.ext-reader-mode .ed.board-footer,
+html.ext-reader-mode .ed.article-footer,
+html.ext-reader-mode .ed.related-articles,
+html.ext-reader-mode footer,
+html.ext-reader-mode .footer,
+html.ext-reader-mode .xe-widget-wrapper {
+  display: none !important;
+}
+
+/* 게시글 내부 — 본문(.rhymix_content) 제외하고 나머지 숨김 */
+/* 추천/비추천 */
+html.ext-reader-mode .wgtRv {
+  display: none !important;
+}
+/* 하단 툴바 (목록/공유/스크랩) */
+html.ext-reader-mode .ed.article-toolbar {
+  display: none !important;
+}
+/* article-head 내 우측 버튼 영역 (신고/더보기 등) */
+html.ext-reader-mode .ed.article-head .title-toolbar .ed.flex.flex-right {
+  display: none !important;
+}
+/* 첨부파일 + 기타 본문 하단 flex-right (추천 아래 영역) */
+html.ext-reader-mode .ed.clearfix.margin-vertical-large > .ed.flex.flex-right,
+html.ext-reader-mode
+  .ed.clearfix.margin-vertical-large
+  > .ed.flex.flex-left.flex-middle {
+  display: none !important;
+}
+/* 댓글 전체 */
+html.ext-reader-mode .ed.comment,
+html.ext-reader-mode #comment_list,
+html.ext-reader-mode #comment_top,
+html.ext-reader-mode #comment_end,
+html.ext-reader-mode .comment-list-wrap,
+html.ext-reader-mode .ed.comment-list,
+html.ext-reader-mode .ed.comment-content,
+html.ext-reader-mode .ed.comment-item,
+html.ext-reader-mode .ed.comment-write,
+html.ext-reader-mode .comment-wrap,
+html.ext-reader-mode .comment_list {
+  display: none !important;
+}
+
+/* 본문 컨테이너 중앙 정렬 */
+html.ext-reader-mode .container,
+html.ext-reader-mode .ed.board.container,
+html.ext-reader-mode .content-wrapper,
+html.ext-reader-mode .article-wrapper {
+  max-width: 720px !important;
+  width: 100% !important;
+  margin: 0 auto !important;
+  padding: 0 20px !important;
+  box-sizing: border-box !important;
+}
+
+/* 본문 타이포그래피 */
+html.ext-reader-mode .xe_content,
+html.ext-reader-mode .rhymix_content {
+  font-size: 17px !important;
+  line-height: 1.9 !important;
+  color: #1e293b !important;
+}
+
+html.ext-reader-mode.color_scheme_dark .xe_content,
+html.ext-reader-mode.color_scheme_dark .rhymix_content {
+  color: #e2e8f0 !important;
+}
+
+/* ── 핫딜 종료 처리 ── */
+/* webzine형 — 반투명 오버레이 */
+.ext-hotdeal-ended-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.25);
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: bold;
+  letter-spacing: 1rem;
+  pointer-events: none;
+  z-index: 1;
+}
+.ext-hotdeal-ended-overlay::after {
+  content: "종료";
+}
+
+/* table형 — 배지 */
+.ext-hotdeal-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 7px;
+  margin-right: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background-color: #64748b;
+  border: 1px solid #475569;
+  border-radius: 5px;
+  vertical-align: middle;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+body.color_scheme_dark .ext-hotdeal-badge {
+  color: #e2e8f0;
+  background-color: #334155;
+  border-color: #475569;
+}
+
+/* table형 행 전체 흐리게 */
+tr.ext-hotdeal-ended-row {
+  opacity: 0.6;
+}
+
+.text-left {
+  text-align: left !important;
+}
+.text-right {
+  text-align: right !important;
+}
+.text-center {
+  text-align: center !important;
+}
+.text-justify {
+  text-align: justify !important;
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ── 개드립콘 단축어 자동완성 드롭다운 ── */
+.ext-dogcon-ac {
+  position: absolute;
+  z-index: 9999999;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+  max-height: 320px;
+  overflow-y: auto;
+  display: none;
+}
+.ext-dogcon-ac-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.ext-dogcon-ac-item.ext-dogcon-ac-active,
+.ext-dogcon-ac-item:hover {
+  background: #eff6ff;
+}
+.ext-dogcon-ac-img {
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0;
+  background: #f1f5f9;
+}
+.ext-dogcon-ac-name {
+  font-weight: bold;
+  font-size: 13px;
+  color: #2563eb;
+}
+.ext-dogcon-ac-alt {
+  font-size: 12px;
+  color: #94a3b8;
+  margin-left: auto;
+  max-width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── 개드립콘 단축어 토스트 ── */
+.ext-dogcon-toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  z-index: 99999999;
+  background: rgba(30, 41, 59, 0.95);
+  color: #f1f5f9;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: bold;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition:
+    opacity 0.3s,
+    transform 0.3s;
+  pointer-events: none;
+}
+.ext-dogcon-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* ── 개드립콘 미리보기 (textarea 위) ── */
+.ext-dogcon-preview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  margin-bottom: 6px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+}
+.ext-dogcon-preview-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+.ext-dogcon-preview-item img {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+}
+.ext-dogcon-preview-item span {
+  font-size: 11px;
+  color: #2563eb;
+  font-weight: bold;
+}
+
+/* ── 토큰 하이라이트 backdrop (textarea 뒤 겹침) ── */
+.ext-dogcon-backdrop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  overflow: hidden;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: transparent;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+/* textarea 를 backdrop 위에 투명 배경으로 */
+textarea.dynamic-temp-textarea {
+  position: relative;
+  z-index: 1;
+  background: transparent !important;
+}
+.ext-dogcon-token {
+  color: #2563eb;
+  background: #dbeafe;
+  border-radius: 3px;
+  font-weight: bold;
+}
+.ext-dogcon-token-invalid {
+  color: #94a3b8;
+  background: #f1f5f9;
+}
+
+/* 상단 네비게이션 따라가기 (스크롤 시 고정) */
+html.ext-sticky-navbar div#navbar,
+html.ext-sticky-navbar .eq.navbar {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1000;
+}
+html.ext-sticky-navbar main#main {
+  padding-top: 61px !important;
+}
+
+/* 선택 키워드 우클릭 차단 메뉴 */
+.ext-keyword-ctxmenu {
+  position: absolute;
+  z-index: 9999999;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  padding: 4px;
+  min-width: 180px;
+  font-size: 13px;
+}
+.ext-keyword-ctxmenu-item {
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.ext-keyword-ctxmenu-item:hover {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+html.ext-dark-mode .ext-keyword-ctxmenu,
+[data-rx-color-scheme="dark"] .ext-keyword-ctxmenu {
+  background: #1e293b;
+  border-color: #334155;
+}
+html.ext-dark-mode .ext-keyword-ctxmenu-item,
+[data-rx-color-scheme="dark"] .ext-keyword-ctxmenu-item {
+  color: #e2e8f0;
+}
+
+/* 키워드 차단 토스트 */
+.ext-keyword-toast {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%) translateY(10px);
+  z-index: 99999999;
+  background: rgba(30, 41, 59, 0.95);
+  color: #f1f5f9;
+  padding: 10px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: bold;
+  white-space: pre-line;
+  text-align: center;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  opacity: 0;
+  transition: opacity 0.3s, transform 0.3s;
+  pointer-events: none;
+}
+.ext-keyword-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+} {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  z-index: 1000;
+}
+html.ext-sticky-navbar main#main {
+  padding-top: 61px !important;
+}
